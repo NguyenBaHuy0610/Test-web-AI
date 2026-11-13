@@ -28,66 +28,78 @@ window.renderAppUser = function (user) {
     if (settingsAvatar) settingsAvatar.textContent = getUserInitials(name) || "?";
 };
 
-window.loadAppUser = async function () {
-    const client = window.supabaseClient;
-    if (!client) {
-        throw new Error("Không tìm thấy kết nối Supabase.");
+let _appUserPromise = null;
+
+window.loadAppUser = async function (forceRefresh = false) {
+    if (!forceRefresh && window.appUser) {
+        return window.appUser;
+    }
+    if (!forceRefresh && _appUserPromise) {
+        return _appUserPromise;
     }
 
-    const { data: sessionData, error: sessionError } = await client.auth.getSession();
-    if (sessionError) throw sessionError;
-    if (!sessionData.session) {
-        window.location.replace("login.html");
-        return null;
-    }
+    _appUserPromise = (async () => {
+        try {
+            const client = window.supabaseClient;
+            if (!client) {
+                throw new Error("Không tìm thấy kết nối Supabase.");
+            }
 
-    const { data: { user }, error: authError } = await client.auth.getUser();
-    if (authError) throw authError;
-    if (!user) {
-        window.location.replace("login.html");
-        return null;
-    }
+            const { data: sessionData, error: sessionError } = await client.auth.getSession();
+            if (sessionError) throw sessionError;
+            if (!sessionData?.session?.user) {
+                window.location.replace("login.html");
+                return null;
+            }
 
-    let membership = null;
-    const { data, error: membershipError } = await client
-        .from("team_members")
-        .select("member_id, account_role, members(member_label, department)")
-        .eq("user_id", user.id)
-        .maybeSingle();
+            const user = sessionData.session.user;
 
-    if (membershipError) {
-        console.error("Không thể tải thông tin thành viên:", membershipError);
-    } else {
-        membership = data;
-    }
+            let membership = null;
+            const { data, error: membershipError } = await client
+                .from("team_members")
+                .select("member_id, account_role, members(member_label, department)")
+                .eq("user_id", user.id)
+                .maybeSingle();
 
-    const name = user.user_metadata?.full_name ||
-        user.user_metadata?.name ||
-        membership?.members?.member_label ||
-        user.email?.split("@")[0] ||
-        "Thành viên";
-    const accountRole = membership?.account_role || user.app_metadata?.role || "";
-    const normalizedRole = String(accountRole).trim().toLowerCase();
-    const roleLabels = {
-        leader: "Trưởng nhóm",
-        member: "Thành viên"
-    };
-    const userInfo = {
-        id: user.id,
-        email: user.email || "",
-        name,
-        role: roleLabels[normalizedRole] ||
-            (accountRole ? String(accountRole) : membershipError ? "Không tải được vai trò" : "Chưa gán vai trò"),
-        accountRole: normalizedRole,
-        isLeader: normalizedRole === "leader",
-        memberId: membership?.member_id || user.user_metadata?.member_id || user.app_metadata?.member_id || null,
-        memberLabel: membership?.members?.member_label || name,
-        department: membership?.members?.department || null
-    };
+            if (membershipError) {
+                console.error("Không thể tải thông tin thành viên:", membershipError);
+            } else {
+                membership = data;
+            }
 
-    window.appUser = userInfo;
-    window.renderAppUser(userInfo);
-    return userInfo;
+            const name = user.user_metadata?.full_name ||
+                user.user_metadata?.name ||
+                membership?.members?.member_label ||
+                user.email?.split("@")[0] ||
+                "Thành viên";
+            const accountRole = membership?.account_role || user.app_metadata?.role || "";
+            const normalizedRole = String(accountRole).trim().toLowerCase();
+            const roleLabels = {
+                leader: "Trưởng nhóm",
+                member: "Thành viên"
+            };
+            const userInfo = {
+                id: user.id,
+                email: user.email || "",
+                name,
+                role: roleLabels[normalizedRole] ||
+                    (accountRole ? String(accountRole) : membershipError ? "Không tải được vai trò" : "Chưa gán vai trò"),
+                accountRole: normalizedRole,
+                isLeader: normalizedRole === "leader",
+                memberId: membership?.member_id || user.user_metadata?.member_id || user.app_metadata?.member_id || null,
+                memberLabel: membership?.members?.member_label || name,
+                department: membership?.members?.department || null
+            };
+
+            window.appUser = userInfo;
+            window.renderAppUser(userInfo);
+            return userInfo;
+        } finally {
+            _appUserPromise = null;
+        }
+    })();
+
+    return _appUserPromise;
 };
 
 const CHAT_HISTORY_TABLE = "ai_conversations";

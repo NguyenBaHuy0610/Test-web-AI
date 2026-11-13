@@ -20,6 +20,31 @@
 
     const ACCEPT_STRING = ".docx,.pdf,.xlsx,.xls,.csv,.txt,.md,.json,.png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp";
 
+    const loadedLibraries = {};
+
+    function loadScriptAsync(src) {
+        if (loadedLibraries[src]) return loadedLibraries[src];
+        loadedLibraries[src] = new Promise((resolve, reject) => {
+            if (typeof document === "undefined" || !document.head) {
+                return resolve();
+            }
+            const existing = document.querySelector(`script[src="${src}"]`);
+            if (existing) {
+                return resolve();
+            }
+            const script = document.createElement("script");
+            script.src = src;
+            script.async = true;
+            script.onload = () => resolve();
+            script.onerror = () => {
+                delete loadedLibraries[src];
+                reject(new Error(`Không thể nạp thư viện xử lý tệp: ${src}`));
+            };
+            document.head.appendChild(script);
+        });
+        return loadedLibraries[src];
+    }
+
     function getExtension(fileName = "", mimeType = "") {
         const clean = String(fileName || "").trim();
         const dotIdx = clean.lastIndexOf(".");
@@ -101,6 +126,9 @@
     }
 
     async function extractDocx(arrayBuffer) {
+        if (typeof window !== "undefined" && !window.mammoth) {
+            await loadScriptAsync("../vendor/mammoth.browser.min.js");
+        }
         if (typeof window === "undefined" || !window.mammoth) {
             throw new Error("Thư viện đọc file Word (mammoth) chưa được nạp.");
         }
@@ -113,6 +141,9 @@
     }
 
     async function extractPdf(arrayBuffer) {
+        if (typeof window !== "undefined" && !window.pdfjsLib) {
+            await loadScriptAsync("../vendor/pdf.min.js");
+        }
         if (typeof window === "undefined" || !window.pdfjsLib) {
             throw new Error("Thư viện đọc file PDF (PDF.js) chưa được nạp.");
         }
@@ -176,7 +207,10 @@
         };
     }
 
-    function extractExcel(arrayBuffer) {
+    async function extractExcel(arrayBuffer) {
+        if (typeof window !== "undefined" && !window.XLSX) {
+            await loadScriptAsync("../vendor/xlsx.full.min.js");
+        }
         if (typeof window === "undefined" || !window.XLSX) {
             throw new Error("Thư viện đọc file Excel (SheetJS) chưa được nạp.");
         }
@@ -307,7 +341,7 @@
             extracted = await extractPdf(buffer);
         } else if (SPREADSHEET_EXTENSIONS.has(ext)) {
             const buffer = await file.arrayBuffer();
-            extracted = extractExcel(buffer);
+            extracted = await extractExcel(buffer);
         } else {
             const text = typeof file.text === "function"
                 ? await file.text()

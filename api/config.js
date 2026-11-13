@@ -1,6 +1,7 @@
 module.exports = (req, res) => {
   res.setHeader("Content-Type", "application/javascript; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store, max-age=0");
+  // Cache at Vercel Edge CDN for 1 hour, stale-while-revalidate for 24 hours to prevent cold start latency
+  res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
 
   const config = {
     GROQ_API_KEY: process.env.GROQ_API_KEY || "",

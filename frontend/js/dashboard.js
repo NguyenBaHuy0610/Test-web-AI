@@ -1195,26 +1195,7 @@ async function initializeEventSelector() {
 async function initializeDashboard() {
     window._activeConversationId = null;
 
-    // Nạp thông tin người dùng
-    await loadUserInfo();
-
-    // Khởi tạo sự kiện đang diễn ra cho AI (Khóa dữ liệu 1 sự kiện)
-    await initializeEventSelector();
-
-    // Nạp & đồng bộ lịch sử trò chuyện đã lưu theo tài khoản
-    await loadChatHistory();
-
-    // Mở cuộc trò chuyện được chọn từ sidebar ở trang khác (?conv=<id>);
-    // ngược lại giữ nguyên màn hình chào mới khi vào Dashboard
-    const convParam = new URLSearchParams(window.location.search).get("conv");
-    if (convParam) {
-        await openConversation(convParam);
-        if (window.history?.replaceState) {
-            window.history.replaceState({}, "", window.location.pathname);
-        }
-    }
-
-    // Khởi tạo các sự kiện giao diện
+    // 1. Khởi tạo ngay các tương tác giao diện và icon (không chờ mạng) để trang hiển thị tức thì
     initializeChatEvents();
     initializeQuickActions();
     initializeCreateEventModal();
@@ -1222,6 +1203,24 @@ async function initializeDashboard() {
     initializeKeyConfigButton();
     DOM.completeEventButton?.addEventListener("click", completeActiveEvent);
     initializeIcons();
+
+    // 2. Nạp thông tin người dùng
+    await loadUserInfo();
+
+    // 3. Chạy song song nạp sự kiện đang diễn ra và đồng bộ lịch sử chat để giảm tối đa thời gian chờ mạng
+    await Promise.all([
+        initializeEventSelector(),
+        loadChatHistory()
+    ]);
+
+    // 4. Mở cuộc trò chuyện được chọn từ sidebar ở trang khác (?conv=<id>) nếu có
+    const convParam = new URLSearchParams(window.location.search).get("conv");
+    if (convParam) {
+        await openConversation(convParam);
+        if (window.history?.replaceState) {
+            window.history.replaceState({}, "", window.location.pathname);
+        }
+    }
 }
 
 document.addEventListener(
