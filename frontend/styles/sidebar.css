@@ -1,0 +1,386 @@
+
+/* =========================================
+   AECPT - SIDEBAR
+   Clean / Minimal / Figma style
+========================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --sidebar-width: 265px;
+}
+
+/* SIDEBAR CONTAINER */
+
+#sidebar-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+
+    width: var(--sidebar-width);
+    height: 100vh;
+}
+
+/* SIDEBAR */
+
+.sidebar {
+    position: relative;
+
+    width: 100%;
+    height: 100%;
+    font-family: 'Inter', sans-serif;
+
+    padding: 27px 17px 13px;
+
+    display: flex;
+    flex-direction: column;
+
+    background: #ffffff;
+    border-right: 1px solid #e8e8e8;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* SCROLLBAR */
+
+.sidebar::-webkit-scrollbar {
+    width: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: #e5e5e5;
+    border-radius: 10px;
+}
+
+/* =========================================
+   BRAND
+========================================= */
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 0 8px;
+    margin-bottom: 15px;
+
+    flex-shrink: 0;
+}
+
+.brand-icon {
+    width: 39px;
+    height: 39px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+    border-radius: 9px;
+}
+
+.brand-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.sidebar-brand span {
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.8px;
+    color: #171717;
+    white-space: nowrap;
+}
+
+/* =========================================
+   WORKSPACE
+========================================= */
+
+.workspace-name {
+    padding: 0 9px;
+    margin: 0 0 35px;
+
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+
+    color: #777777;
+    white-space: nowrap;
+
+    flex-shrink: 0;
+}
+
+/* =========================================
+   MENU
+========================================= */
+
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    width: 100%;
+    flex-shrink: 0;
+}
+
+.menu-item {
+    width: 100%;
+    min-height: 47px;
+    height: 47px;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 0 13px;
+
+    border-radius: 11px;
+    text-decoration: none;
+
+    color: #78819D;
+
+    font-size: 14px;
+    font-weight: 400;
+
+    white-space: nowrap;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.menu-item i,
+.menu-item svg {
+    width: 19px;
+    height: 19px;
+
+    flex-shrink: 0;
+    display: block;
+
+    stroke-width: 1.8;
+}
+
+/* HOVER */
+
+.menu-item:hover {
+    background: #F2F4FF;
+    color: #5266D5;
+}
+
+/* ACTIVE */
+
+.menu-item.active {
+    background: #EEF0FF;
+    color: #4F63D4;
+    font-weight: 600;
+}
+
+.menu-item.active i,
+.menu-item.active svg {
+    color: #5266D5;
+    stroke-width: 2.2;
+}
+
+/* =========================================
+   CHAT HISTORY
+========================================= */
+
+.chat-history {
+    margin-top: 39px;
+    flex-shrink: 0;
+}
+
+.section-label {
+    padding: 0 13px;
+    margin-bottom: 14px;
+
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+
+    color: #777777;
+}
+
+.chat-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.chat-history-item {
+    min-height: 40px;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 9px 13px;
+
+    border-radius: 9px;
+
+    font-size: 13px;
+    color: #777777;
+
+    cursor: pointer;
+    white-space: nowrap;
+
+    transition: 0.2s ease;
+}
+
+.chat-history-item i,
+.chat-history-item svg {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+}
+
+.chat-history-item:hover {
+    background: #F2F4FF;
+    color: #5266D5;
+}
+
+/* =========================================
+   USER INFORMATION
+========================================= */
+
+.sidebar-user {
+    margin-top: auto;
+
+    min-height: 56px;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 13px 8px 0;
+
+    border-top: 1px solid #eeeeee;
+
+    flex-shrink: 0;
+}
+
+.user-avatar {
+    width: 38px;
+    height: 38px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #EEF0FF;
+    color: #5266D5;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.user-info strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 12px;
+    font-weight: 600;
+    color: #222222;
+}
+
+.user-info span {
+    font-size: 10px;
+    color: #888888;
+    white-space: nowrap;
+}
+
+.setting-button {
+    width: 32px;
+    height: 32px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    border-radius: 8px;
+
+    background: transparent;
+    color: #777777;
+
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.setting-button i,
+.setting-button svg {
+    width: 18px;
+    height: 18px;
+}
+
+.setting-button:hover {
+    background: #EEF0FF;
+    color: #5266D5;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 768px) {
+
+    :root {
+        --sidebar-width: 72px;
+    }
+
+    #sidebar-container {
+        width: var(--sidebar-width);
+    }
+
+    .sidebar {
+        padding: 20px 9px 12px;
+    }
+
+    .sidebar-brand {
+        justify-content: center;
+        padding: 0;
+    }
+
+    .sidebar-brand span,
+    .workspace-name,
+    .menu-item span,
+    .user-info,
+    .setting-button,
+    .section-label,
+    .chat-history {
+        display: none;
+    }
+
+    .menu-item {
+        justify-content: center;
+        padding: 0;
+    }
+
+    .sidebar-user {
+        justify-content: center;
+        padding: 13px 0 0;
+    }
+}

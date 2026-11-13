@@ -1,0 +1,18 @@
+{
+  "name": "task-tracker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI event comm-plan tracker - demo chạy local",
+  "scripts": {
+    "start": "node server/server.js",
+    "algo": "python algorithm/demo.py"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "mammoth": "^1.13.0",
+    "pdfjs-dist": "^3.11.174",
+    "xlsx": "^0.18.5"
+  }
+}

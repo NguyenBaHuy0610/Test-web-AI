@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Thành viên | AECPT</title>
+    <script src="../js/i18n.js"></script>
+
+    <!-- Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../styles/sidebar.css">
+    <link rel="stylesheet" href="../styles/members.css">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+</head>
+
+<body>
+
+    <!-- ==============================
+         SIDEBAR
+    =============================== -->
+
+    <div id="sidebar-container"></div>
+
+
+    <!-- ==============================
+         MAIN CONTENT
+    =============================== -->
+
+    <main class="main-content">
+
+        <section class="members-page">
+
+            <!-- PAGE HEADER -->
+
+            <header class="page-header">
+
+                <div class="page-heading">
+
+                    <h1>Thành viên</h1>
+
+                    <p>
+                        Quản lý và theo dõi thông tin các thành viên
+                        trong ban Multimedia.
+                    </p>
+
+                </div>
+
+                <div class="header-actions">
+
+                    <div class="search-box">
+
+                        <i data-lucide="search"></i>
+
+                        <input
+                            type="search"
+                            id="memberSearch"
+                            placeholder="Tìm kiếm thành viên..."
+                            autocomplete="off"
+                        >
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="add-member-btn"
+                        id="openAddMember"
+                    >
+                        <i data-lucide="plus"></i>
+                        Thêm thành viên
+                    </button>
+
+                </div>
+
+            </header>
+
+
+            <!-- ==============================
+                 FILTER GROUPS
+            =============================== -->
+
+            <section class="member-filters">
+
+                <button
+                    class="filter-btn active"
+                    data-group="all"
+                    type="button"
+                >
+                    <i data-lucide="users"></i>
+                    Tất cả thành viên
+                    <span id="totalMemberCount">--</span>
+                </button>
+
+                <button
+                    class="filter-btn"
+                    data-group="Edit"
+                    type="button"
+                >
+                    <i data-lucide="clapperboard"></i>
+                    Edit
+                    <span data-count="Edit">--</span>
+                </button>
+
+                <button
+                    class="filter-btn"
+                    data-group="Design"
+                    type="button"
+                >
+                    <i data-lucide="pen-tool"></i>
+                    Design
+                    <span data-count="Design">--</span>
+                </button>
+
+                <button
+                    class="filter-btn"
+                    data-group="Content"
+                    type="button"
+                >
+                    <i data-lucide="file-text"></i>
+                    Content
+                    <span data-count="Content">--</span>
+                </button>
+
+                <button
+                    class="filter-btn"
+                    data-group="Tech"
+                    type="button"
+                >
+                    <i data-lucide="code"></i>
+                    Tech
+                    <span data-count="Tech">--</span>
+                </button>
+
+                <button
+                    class="filter-btn"
+                    data-group="Photo"
+                    type="button"
+                >
+                    <i data-lucide="camera"></i>
+                    Photo
+                    <span data-count="Photo">--</span>
+                </button>
+
+            </section>
+
+
+            <!-- ==============================
+                 MEMBER TABLE
+            =============================== -->
+
+            <section class="member-section">
+
+                <div class="table-heading">
+
+                    <div class="table-title">
+
+                        <h3 id="tableTitle">
+                            Danh sách thành viên
+                        </h3>
+
+                        <span id="filteredMemberCount">
+                            Đang tải...
+                        </span>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="clear-filter-btn"
+                        id="clearFilter"
+                        hidden
+                    >
+                        <i data-lucide="x"></i>
+                        Xóa bộ lọc
+                    </button>
+
+                </div>
+
+
+                <div class="member-table-wrapper">
+
+                    <table class="member-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Thành viên</th>
+
+                                <th>Nhóm chức năng</th>
+
+                                <th>Vai trò</th>
+
+                                <th>Email</th>
+
+                                <th>Trạng thái</th>
+
+                                <th>Thao tác</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <!-- 
+                            Dữ liệu thành viên sẽ được JS
+                            render từ API/database vào đây.
+                        -->
+
+                        <tbody id="memberTableBody">
+
+                            <!-- JS RENDER MEMBERS HERE -->
+
+                        </tbody>
+
+                    </table>
+
+
+                    <!-- EMPTY STATE -->
+
+                    <div
+                        class="member-empty-state"
+                        id="memberEmptyState"
+                        hidden
+                    >
+
+                        <i data-lucide="users"></i>
+
+                        <h3>Chưa có thành viên</h3>
+
+                        <p>
+                            Danh sách thành viên sẽ hiển thị
+                            tại đây khi có dữ liệu.
+                        </p>
+
+                    </div>
+
+
+                    <!-- TABLE FOOTER -->
+
+                    <div class="table-footer">
+
+                        <span id="tableFooterInfo">
+                            Chưa có dữ liệu
+                        </span>
+
+                        <span>Ban Multimedia</span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- ==============================
+             MEMBER DETAIL PANEL
+        =============================== -->
+
+        <aside
+            class="member-detail-panel"
+            id="memberDetailPanel"
+            hidden
+        >
+
+            <div class="detail-header">
+
+                <h3>Chi tiết thành viên</h3>
+
+                <button
+                    type="button"
+                    id="closeDetailPanel"
+                    class="close-detail-btn"
+                    aria-label="Đóng"
+                >
+                    <i data-lucide="x"></i>
+                </button>
+
+            </div>
+
+
+            <div class="detail-content" id="memberDetailContent">
+
+                <!--
+                    Thông tin thành viên được JS
+                    render khi người dùng chọn một thành viên.
+                -->
+
+            </div>
+
+        </aside>
+
+    </main>
+
+
+    <!-- ==============================
+         ADD MEMBER MODAL
+         GIỮ LẠI FORM CŨ CỦA BẠN
+    =============================== -->
+
+  <div class="modal-overlay" id="addMemberModal">
+    <div class="modal-container">   
+        <div class="modal-header">
+            <div>
+                <h2>Thêm thành viên</h2>
+                <p>Thêm thành viên mới vào không gian ban Multimedia</p>
+            </div>
+            <button
+                type="button"
+                class="close-modal"
+                id="closeAddMember"
+                aria-label="Đóng"
+            >
+                &times;
+            </button>
+        </div>
+        
+        <form id="addMemberForm">
+            <div class="form-group">
+                <label for="memberName">Họ và tên</label>
+                <input 
+                    type="text"
+                    id="memberName"
+                    name="memberName"
+                    placeholder="Nhập họ và tên"
+                    required
+                >
+
+                <small class="error-message" id="nameError"></small>
+            </div>
+
+            <div class="form-group">
+                <label for="memberEmail">
+                    Email
+                </label>
+                <div class="input-container">
+                    <span class="input-icon">✉</span>
+                    <input 
+                        type="email"
+                        id="memberEmail"
+                        name="memberEmail"
+                        placeholder="Nhập địa chỉ email"
+                        required
+                    >
+                </div>
+
+                <small class="error-message" id="emailError"></small>
+            </div>
+
+            <div class="form-group">
+                <label for="memberInitialPassword">Mật khẩu khởi tạo</label>
+                <div class="password-input-container">
+                    <input
+                        type="password"
+                        id="memberInitialPassword"
+                        name="initialPassword"
+                        placeholder="Nhập mật khẩu ban đầu"
+                        minlength="8"
+                        autocomplete="new-password"
+                        required
+                    >
+                    <button type="button" class="password-visibility-toggle"
+                            id="toggleMemberInitialPassword" aria-label="Hiện mật khẩu">
+                        Hiện
+                    </button>
+                </div>
+                <small class="field-hint">Mật khẩu phải có ít nhất 8 ký tự. Gửi cho thành viên qua kênh riêng.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="memberRole">
+                    Vai trò
+                </label>
+
+                <select
+                    id="memberRole"
+                    name="memberRole"
+                    required
+                >
+                    <option value="" disabled selected>
+                        Chọn vai trò
+                    </option>
+
+                    <option Value="Trưởng nhóm">
+                        Trưởng nhóm
+                    </option>
+
+                    <option value="Thành viên">
+                        Thành viên
+                    </option>
+                </select>
+
+                <small class="field-hint">
+                    Trưởng nhóm, Thành viên
+                </small>
+
+                <small class="error-message" id="roleError"></small>
+            </div>
+
+            <div class="modal-actions">
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    id="cancelAddMember"
+                >
+                    Hủy
+                </button>
+
+                <button
+                    type="submit"
+                    class="save-btn"
+                >
+                    Thêm thành viên
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+    <!-- ==============================
+         UPDATE MEMBER MODAL
+         GIỮ LẠI FORM CŨ CỦA BẠN
+    =============================== -->
+
+    <div class="modal-overlay" id="updateMemberModal" hidden>
+    <div class="modal-container update-modal">
+        <div class="modal-header">
+            <div class="modal-heading">
+                <h2>Cập nhật thông tin thành viên</h2>
+                <p>Cập nhật nhóm chức năng và thời gian rảnh của thành viên</p>
+            </div>
+
+            <button
+                type="button"
+                class="close-modal"
+                id="closeUpdateModal"
+                aria-label="Đóng cửa sổ"
+            >
+                &times;
+            </button>
+        </div>
+
+        <form id="updateMemberForm" novalidate>
+            <div class="form-group">
+                <label for="updateMemberName">
+                    Họ và tên *
+                </label>
+
+                <input
+                    type="text"
+                    id="updateMemberName"
+                    name="memberName"
+                    placeholder="Nhập tên thành viên"
+                    required
+                >
+
+                <small 
+                    class="error-message"
+                    id="updateNameError"
+                    style="display: none;"
+                ><span aria-hidden="true">ⓘ</span>Vui lòng nhập họ và tên</small>
+            </div>
+
+            <div class="form-group">
+                <label>Nhóm chức năng</label>
+
+                <p class="field-description">Chọn những nhóm chức năng mà thành viên tham gia</p>
+
+                <div class="skill-select" id="groupSelect">
+                    <div
+                        class="selected-skills"
+                        id="selectedGroups"
+                        tabindex="0"
+                        role="button"
+                        aria-expanded="false"
+                        aria-controls="groupOptions"
+                    >
+                        <span class="skill-placeholder">Chọn nhóm chức năng</span>
+                        <span class="dropdown-arrow">⌄</span>
+                    </div>
+
+                    <div class="skill-options" id="groupOptions" hidden>
+                        <label class="skill-option">
+                            <input type="checkbox" name="groups" value="Edit">
+                            <span>Edit</span>
+                        </label>
+                        <label class="skill-option">
+                            <input type="checkbox" name="groups" value="Design">
+                            <span>Design</span>
+                        </label>
+                        <label class="skill-option">
+                            <input type="checkbox" name="groups" value="Content">
+                            <span>Content</span>
+                        </label>
+                        <label class="skill-option">
+                            <input type="checkbox" name="groups" value="Tech">
+                            <span>Tech</span>
+                        </label>
+                        <label class="skill-option">
+                            <input type="checkbox" name="groups" value="Photo">
+                            <span>Photo</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="form-group availabity-group">
+                <label>
+                    Thời gian rảnh
+                </label>
+                <p class="filed-description">
+                    Chọn ngày và khung giờ thành viên có thể làm việc (từ 06:00 đến 22:00)
+                </p>
+
+                <div class="weekday-list">
+                    <button type="button" class="weekday-option" data-availability-day="2">Thứ 2</button>
+                    <button type="button" class="weekday-option" data-availability-day="3">Thứ 3</button>
+                    <button type="button" class="weekday-option" data-availability-day="4">Thứ 4</button>
+                    <button type="button" class="weekday-option" data-availability-day="5">Thứ 5</button>
+                    <button type="button" class="weekday-option" data-availability-day="6">Thứ 6</button>
+                    <button type="button" class="weekday-option" data-availability-day="7">Thứ 7</button>
+                    <button type="button" class="weekday-option" data-availability-day="8">Chủ nhật</button>
+                </div>
+                <div class="availability-editor" id="availabilitySlots" aria-live="polite">
+                    <p class="availability-prompt">Chọn một thứ ở trên để thiết lập khung giờ rảnh.</p>
+                </div>
+                <input type="hidden" name="availability" id="availabilityValue" value="{}">
+                <p class="availability-message" id="availabilityMessage" role="status" aria-live="polite"></p>
+                <button type="button" class="save-btn availability-save-btn" id="saveAvailabilityButton">
+                    Lưu thời gian rảnh
+                </button>
+            </div>
+
+            <div class="modal-actions">
+                <button 
+                    type="button"
+                    class="cancel-btn"
+                    id="cancelUpdateModal"
+                >
+                    Hủy
+                </button>
+
+                <button
+                    type="submit"
+                    class="save-btn"
+                >
+                    Lưu thành viên
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+    <!-- ==============================
+         JAVASCRIPT
+    =============================== -->
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="../js/sidebar.js"></script>
+
+    <!-- Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Supabase Connection -->
+    <script src="../js/supabase.js"></script>
+
+    <script src="../js/members.js"></script>
+
+    <script>
+        lucide.createIcons();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,617 @@
+:root {
+    --setting-primary: #5b6fe1;
+    --setting-primary-dark: #4054b5;
+    --setting-primary-light: #eef0ff;
+    --setting-background: #f8f9fc;
+    --setting-surface: #fff;
+    --setting-text: #252b45;
+    --setting-muted: #78819d;
+    --setting-border: #e7e9f0;
+    --setting-success: #27805e;
+    --setting-danger: #b1434c;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--setting-background);
+    color: var(--setting-text);
+    font-family: "Be Vietnam Pro", sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content {
+    width: calc(100% - var(--sidebar-width, 265px));
+    min-width: 0;
+    min-height: 100vh;
+    margin-left: var(--sidebar-width, 265px);
+    padding: 27px clamp(20px, 3vw, 42px) 42px;
+}
+
+.page-header {
+    margin: 0 0 24px;
+}
+
+.page-heading h1 {
+    margin: 0 0 7px;
+    color: var(--setting-text);
+    font-size: 23px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.35;
+}
+
+.page-heading p {
+    margin: 0;
+    color: var(--setting-muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.settings-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    max-width: 960px;
+}
+
+.settings-card {
+    min-width: 0;
+    padding: 23px 25px;
+    background: var(--setting-surface);
+    border: 1px solid var(--setting-border);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(32, 44, 74, 0.04);
+}
+
+.settings-card-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    margin-bottom: 20px;
+}
+
+.settings-icon {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    place-items: center;
+    border-radius: 10px;
+    background: var(--setting-primary-light);
+    color: var(--setting-primary);
+}
+
+.settings-icon svg {
+    width: 19px;
+    height: 19px;
+}
+
+.settings-card-heading h2,
+.notification-settings-heading h2 {
+    margin: 0 0 4px;
+    color: var(--setting-text);
+    font-size: 15px;
+    font-weight: 650;
+    line-height: 1.5;
+}
+
+.settings-card-heading p,
+.notification-settings-heading p {
+    margin: 0;
+    color: var(--setting-muted);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.settings-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
+}
+
+.settings-form label {
+    margin-top: 5px;
+    color: var(--setting-text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.settings-form input {
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 12px;
+    color: var(--setting-text);
+    background: #fff;
+    border: 1px solid var(--setting-border);
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.settings-form input::placeholder {
+    color: #a3aabe;
+}
+
+.settings-form input:focus,
+.reminder-field select:focus,
+.reminder-field input:focus,
+.notification-language-row select:focus {
+    border-color: var(--setting-primary);
+    box-shadow: 0 0 0 3px rgba(91, 111, 225, 0.12);
+    outline: none;
+}
+
+.settings-form input[readonly] {
+    color: var(--setting-muted);
+    background: #f8f9fc;
+    cursor: default;
+}
+
+.settings-form > small {
+    margin-top: -4px;
+    color: var(--setting-muted);
+    font-size: 11px;
+}
+
+.form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    margin-top: 10px;
+}
+
+.form-message {
+    min-height: 20px;
+    margin: 0 auto 0 0;
+    color: var(--setting-muted);
+    font-size: 12px;
+}
+
+.form-message.is-error,
+.notification-save-status.is-error {
+    color: var(--setting-danger);
+}
+
+.form-message.is-success,
+.notification-save-status.is-success {
+    color: var(--setting-success);
+}
+
+.button,
+.settings-button-primary,
+.settings-button-secondary {
+    display: inline-flex;
+    min-height: 39px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 15px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.button:disabled,
+.settings-button-primary:disabled,
+.settings-button-secondary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.button-primary,
+.settings-button-primary {
+    color: #fff;
+    background: var(--setting-primary);
+}
+
+.button-primary:hover:not(:disabled),
+.settings-button-primary:hover:not(:disabled) {
+    background: var(--setting-primary-dark);
+}
+
+.button-danger {
+    color: var(--setting-danger);
+    background: #fff;
+    border-color: #f0cfd2;
+}
+
+.button-danger:hover:not(:disabled) {
+    background: #fff4f4;
+    border-color: #eab9be;
+}
+
+.settings-button-secondary {
+    color: var(--setting-text);
+    background: #fff;
+    border-color: var(--setting-border);
+}
+
+.settings-button-secondary:hover:not(:disabled) {
+    background: #f8f9fc;
+    border-color: #d8ddea;
+}
+
+.button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.settings-session-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+}
+
+.settings-session-card .settings-card-heading {
+    flex: 1 1 420px;
+    margin-bottom: 0;
+}
+
+.settings-session-card > .form-message {
+    flex: 1 0 100%;
+}
+
+.notification-settings-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.settings-icon-button {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    place-items: center;
+    padding: 0;
+    color: var(--setting-muted);
+    background: #fff;
+    border: 1px solid var(--setting-border);
+    border-radius: 8px;
+    font-size: 21px;
+    line-height: 1;
+    transition: color 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+}
+
+.settings-icon-button:hover {
+    color: var(--setting-primary-dark);
+    background: var(--setting-primary-light);
+    border-color: #d9defd;
+}
+
+.notification-account {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 12px 14px;
+    background: #f8f9fc;
+    border: 1px solid var(--setting-border);
+    border-radius: 9px;
+}
+
+.notification-account-avatar {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--setting-primary-dark);
+    background: var(--setting-primary-light);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.notification-account > span:last-child {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.notification-account strong {
+    overflow: hidden;
+    color: var(--setting-text);
+    font-size: 12px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.notification-account small {
+    color: var(--setting-muted);
+    font-size: 11px;
+}
+
+.notification-section-title {
+    margin: 22px 0 3px;
+    color: var(--setting-text);
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.notification-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--setting-border);
+}
+
+.notification-option > span {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.notification-option strong,
+.notification-language-row strong {
+    color: var(--setting-text);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.notification-option small {
+    color: var(--setting-muted);
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.setting-switch {
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.setting-switch input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
+}
+
+.setting-switch-track {
+    position: relative;
+    display: block;
+    width: 38px;
+    height: 22px;
+    flex: 0 0 38px;
+    border-radius: 20px;
+    background: #d9deea;
+    transition: background 0.18s ease;
+}
+
+.setting-switch-track::before {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(32, 44, 74, 0.2);
+    content: "";
+    transition: transform 0.18s ease;
+}
+
+.setting-switch input:checked + .setting-switch-track {
+    background: var(--setting-primary);
+}
+
+.setting-switch input:checked + .setting-switch-track::before {
+    transform: translateX(16px);
+}
+
+.setting-switch input:focus-visible + .setting-switch-track {
+    outline: 3px solid rgba(91, 111, 225, 0.2);
+    outline-offset: 2px;
+}
+
+.setting-switch-state {
+    color: var(--setting-primary-dark);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.setting-switch input:not(:checked) ~ .setting-switch-state {
+    visibility: hidden;
+}
+
+.reminder-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0 0 2px;
+    padding: 14px;
+    background: #f8f9fc;
+    border: 1px solid var(--setting-border);
+    border-top: 0;
+    border-radius: 0 0 9px 9px;
+}
+
+.reminder-field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--setting-text);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.reminder-field select,
+.reminder-field input,
+.notification-language-row select {
+    width: 100%;
+    min-height: 38px;
+    padding: 8px 10px;
+    color: var(--setting-text);
+    background: #fff;
+    border: 1px solid var(--setting-border);
+    border-radius: 7px;
+    font-size: 12px;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.reminder-options > small {
+    grid-column: 1 / -1;
+    margin-top: -6px;
+    color: var(--setting-muted);
+    font-size: 10px;
+}
+
+.reminder-options > p {
+    grid-column: 1 / -1;
+    margin: -5px 0 0;
+    color: var(--setting-muted);
+    font-size: 11px;
+}
+
+.notification-option-last {
+    border-bottom: 0;
+}
+
+.notification-language-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 16px;
+    padding-top: 15px;
+    border-top: 1px solid var(--setting-border);
+}
+
+.notification-language-row select {
+    width: min(220px, 55%);
+}
+
+.notification-footnote {
+    margin: 12px 0 0;
+    color: var(--setting-muted);
+    font-size: 10px;
+}
+
+.notification-save-status {
+    min-height: 19px;
+    margin: 9px 0 0;
+    color: var(--setting-muted);
+    font-size: 12px;
+}
+
+.notification-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    padding-top: 12px;
+    border-top: 1px solid var(--setting-border);
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        width: calc(100% - var(--sidebar-width, 72px));
+        margin-left: var(--sidebar-width, 72px);
+        padding: 23px 16px 32px;
+    }
+
+    .settings-layout {
+        gap: 13px;
+    }
+
+    .settings-card {
+        padding: 19px 17px;
+    }
+
+    .settings-card-heading {
+        gap: 11px;
+    }
+
+    .settings-session-card {
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .settings-session-card .settings-card-heading {
+        flex-basis: 100%;
+    }
+
+    .settings-session-card > .button {
+        margin-left: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-content {
+        padding-right: 12px;
+        padding-left: 12px;
+    }
+
+    .settings-card {
+        padding: 17px 14px;
+    }
+
+    .reminder-options {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .reminder-options > small,
+    .reminder-options > p {
+        grid-column: auto;
+    }
+
+    .notification-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .notification-actions .settings-button-primary,
+    .notification-actions .settings-button-secondary {
+        width: 100%;
+        padding: 0 10px;
+    }
+
+    .form-actions {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-actions .button {
+        align-self: flex-end;
+    }
+}

@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch & Deadline | AECPT</title>
+    <script src="../js/i18n.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../styles/sidebar.css">
+    <link rel="stylesheet" href="../styles/task-calendar.css">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+
+<div class="app-container">
+
+    <div id="sidebar-container"></div>
+
+
+    <!-- ==================================
+         MAIN CONTENT
+    =================================== -->
+
+    <main class="main-content">
+
+        <!-- PAGE HEADER -->
+
+        <header class="page-header">
+
+            <div class="page-heading">
+
+                <h1>Lịch & Deadline</h1>
+
+                <p>
+                    Theo dõi lịch làm việc và những deadline sắp tới của bạn.
+                </p>
+
+                <small id="calendarCurrentDate">
+                    <!-- Ngày hiện tại được JavaScript cập nhật -->
+                </small>
+
+            </div>
+
+
+            <!-- ĐIỀU HƯỚNG THỜI GIAN -->
+
+            <div class="calendar-navigation">
+
+                <button type="button"
+                        id="calendarTodayBtn"
+                        class="calendar-nav-btn">
+                    Hôm nay
+                </button>
+
+                <label class="calendar-date-picker" aria-label="Chọn ngày trong lịch">
+                    <i data-lucide="calendar-days" aria-hidden="true"></i>
+                    <input type="date" id="calendarDatePicker" aria-label="Chọn ngày cần xem">
+                </label>
+
+                <button type="button"
+                        id="calendarPrevBtn"
+                        class="calendar-nav-btn"
+                        aria-label="Thời gian trước">
+
+                    <i data-lucide="chevron-left"></i>
+
+                </button>
+
+                <button type="button"
+                        id="calendarNextBtn"
+                        class="calendar-nav-btn"
+                        aria-label="Thời gian tiếp theo">
+
+                    <i data-lucide="chevron-right"></i>
+
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- ==================================
+             SUMMARY CARDS
+        =================================== -->
+
+        <section class="calendar-summary">
+
+            <article class="summary-card">
+
+                <div class="summary-card-header">
+
+                    <span>Deadline hôm nay</span>
+
+                    <i data-lucide="calendar-days"></i>
+
+                </div>
+
+                <strong id="todayDeadlineCount">—</strong>
+
+            </article>
+
+
+            <article class="summary-card">
+
+                <div class="summary-card-header">
+
+                    <span>Trong 7 ngày tới</span>
+
+                    <i data-lucide="clock"></i>
+
+                </div>
+
+                <strong id="upcomingDeadlineCount">—</strong>
+
+            </article>
+
+
+            <article class="summary-card">
+
+                <div class="summary-card-header">
+
+                    <span>Đã quá hạn</span>
+
+                    <i data-lucide="alert-circle"></i>
+
+                </div>
+
+                <strong id="overdueDeadlineCount">—</strong>
+
+            </article>
+
+        </section>
+
+
+        <!-- ==================================
+             CALENDAR VIEW TOOLBAR
+        =================================== -->
+
+        <section class="calendar-toolbar">
+
+            <div class="calendar-view-tabs">
+
+                <button type="button"
+                        class="calendar-view-tab active"
+                        data-view="month"
+                        id="monthViewBtn">
+
+                    Lịch tháng
+
+                </button>
+
+
+                <button type="button"
+                        class="calendar-view-tab"
+                        data-view="week"
+                        id="weekViewBtn">
+
+                    Lịch tuần
+
+                </button>
+
+
+                <button type="button"
+                        class="calendar-view-tab"
+                        data-view="gantt"
+                        id="ganttViewBtn">
+
+                    Gantt Chart
+
+                </button>
+
+            </div>
+
+
+            <!-- CHỈ HIỂN THỊ CÔNG VIỆC CỦA TÔI -->
+
+            <button type="button"
+                    class="calendar-personal-filter"
+                    id="myTasksOnlyBtn"
+                    aria-pressed="false">
+
+                <i data-lucide="user-round"></i>
+
+                <span>Chỉ công việc của tôi</span>
+
+            </button>
+
+        </section>
+
+
+        <!-- ==================================
+             CALENDAR WORKSPACE
+        =================================== -->
+
+        <section class="calendar-workspace">
+
+            <!-- MAIN CALENDAR AREA -->
+
+            <div class="calendar-main-panel">
+
+
+                <!-- ==================================
+                     GANTT CHART VIEW
+                =================================== -->
+
+                <section class="calendar-view-panel"
+                         id="ganttView"
+                         data-view-panel="gantt">
+
+                    <div class="calendar-panel-header">
+
+                        <div>
+                            <h2>Gantt Chart</h2>
+
+                            <p>
+                                Theo dõi thời gian thực hiện và tiến độ công việc của bạn.
+                            </p>
+                        </div>
+
+
+                        <div class="gantt-toolbar">
+
+                            <button type="button"
+                                    class="calendar-month-picker"
+                                    id="ganttMonthButton"
+                                    aria-label="Chọn tháng cho Gantt Chart">
+                                <i data-lucide="calendar-days"></i>
+                                <span id="ganttMonthLabel"></span>
+                            </button>
+                            <input type="month"
+                                   id="ganttMonthPicker"
+                                   class="gantt-month-input"
+                                   tabindex="-1"
+                                   aria-label="Chọn tháng cho Gantt Chart">
+
+
+                            <div class="gantt-scale-tabs">
+
+                                <button type="button"
+                                        class="gantt-scale-btn active"
+                                        data-scale="day">
+                                    Ngày
+                                </button>
+
+                                <button type="button"
+                                        class="gantt-scale-btn"
+                                        data-scale="week">
+                                    Tuần
+                                </button>
+
+                                <button type="button"
+                                        class="gantt-scale-btn"
+                                        data-scale="month">
+                                    Tháng
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- GANTT CONTENT -->
+
+                    <div class="gantt-scroll-container">
+
+                        <div class="gantt-chart" id="ganttChart">
+
+                            <!--
+                                JavaScript sẽ tạo:
+                                - Cột thông tin công việc
+                                - Các mốc thời gian
+                                - Thanh biểu diễn thời gian thực hiện
+                                - Tiến độ công việc
+                                - Mốc deadline
+
+                                Không khai báo task mẫu tại HTML.
+                            -->
+
+                            <div class="calendar-empty-state"
+                                 id="ganttEmptyState">
+
+                                <i data-lucide="calendar-days"></i>
+
+                                <p>Đang tải dữ liệu công việc...</p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- GANTT FOOTER -->
+
+                    <div class="gantt-footer">
+
+                        <div class="gantt-legend">
+
+                            <span>
+                                <i class="legend-dot"></i>
+                                Công việc
+                            </span>
+
+                            <span>
+                                <i class="legend-diamond"></i>
+                                Deadline
+                            </span>
+
+                            <span>
+                                <i class="legend-completed"></i>
+                                Đã hoàn thành
+                            </span>
+
+                        </div>
+
+                        <div class="gantt-range-info"
+                             id="ganttRangeInfo">
+                            <!-- Khoảng thời gian đang xem -->
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- ==================================
+                     MONTH VIEW
+                =================================== -->
+
+                <section class="calendar-view-panel"
+                         id="monthView"
+                         data-view-panel="month"
+                         hidden>
+
+                    <div class="calendar-panel-header">
+
+                        <div class="month-heading">
+
+                            <h2 id="monthViewTitle">
+                                <!-- Tháng/năm -->
+                            </h2>
+
+                            <span id="monthDeadlineCount">
+                                <!-- Số deadline trong tháng -->
+                            </span>
+
+                        </div>
+
+                        <button type="button"
+                                class="calendar-today-small-btn"
+                                id="monthTodayBtn">
+                            Ngày
+                        </button>
+
+                    </div>
+
+
+                    <!-- TÊN CÁC NGÀY -->
+
+                    <div class="month-weekdays">
+
+                        <div>Thứ 2</div>
+                        <div>Thứ 3</div>
+                        <div>Thứ 4</div>
+                        <div>Thứ 5</div>
+                        <div>Thứ 6</div>
+                        <div>Thứ 7</div>
+                        <div>Chủ nhật</div>
+
+                    </div>
+
+
+                    <!-- LƯỚI LỊCH THÁNG -->
+
+                    <div class="month-calendar-grid"
+                         id="monthCalendarGrid">
+
+                        <!-- JavaScript render các ngày và deadline -->
+
+                    </div>
+
+
+                    <div class="calendar-footer">
+
+                        <div class="calendar-legend">
+
+                            <span>
+                                <i class="legend-dot"></i>
+                                Hôm nay
+                            </span>
+
+                        </div>
+
+                        <span id="monthCalendarNote">
+                            <!-- Ghi chú trạng thái lịch -->
+                        </span>
+
+                    </div>
+
+                </section>
+
+
+                <!-- ==================================
+                     WEEK VIEW
+                =================================== -->
+
+                <section class="calendar-view-panel"
+                         id="weekView"
+                         data-view-panel="week"
+                         hidden>
+
+                    <div class="calendar-panel-header">
+
+                        <div class="week-heading">
+
+                            <h2 id="weekViewTitle">
+                                <!-- Khoảng ngày trong tuần -->
+                            </h2>
+
+                            <span id="weekDeadlineCount">
+                                <!-- Số deadline trong tuần -->
+                            </span>
+
+                        </div>
+
+                        <button type="button"
+                                class="calendar-today-small-btn"
+                                id="weekTodayBtn">
+                            Ngày
+                        </button>
+
+                    </div>
+
+
+                    <!-- LƯỚI LỊCH TUẦN -->
+
+                    <div class="week-calendar-grid"
+                         id="weekCalendarGrid">
+
+                        <!-- JavaScript render 7 ngày trong tuần -->
+
+                    </div>
+
+
+                    <div class="calendar-footer">
+
+                        <span id="weekCalendarNote">
+                            Deadline được hiển thị theo ngày.
+                        </span>
+
+                    </div>
+
+                </section>
+
+
+                <!-- ==================================
+                     DAY VIEW
+                =================================== -->
+
+                <section class="calendar-view-panel"
+                         id="dayView"
+                         data-view-panel="day"
+                         hidden>
+
+                    <div class="calendar-panel-header">
+
+                        <div class="day-heading">
+
+                            <h2 id="dayViewTitle">
+                                <!-- Thứ, ngày, tháng, năm -->
+                            </h2>
+
+                            <span id="dayDeadlineCount">
+                                <!-- Số deadline trong ngày -->
+                            </span>
+
+                        </div>
+
+                        <button type="button"
+                                class="calendar-today-small-btn"
+                                id="dayTodayBtn">
+                            Ngày
+                        </button>
+
+                    </div>
+
+
+                    <div class="day-calendar-content"
+                         id="dayCalendarContent">
+
+                        <!-- JavaScript render công việc trong ngày -->
+
+                    </div>
+
+                </section>
+
+
+            </div>
+
+
+            <!-- ==================================
+                 UPCOMING DEADLINES PANEL
+            =================================== -->
+
+            <aside class="upcoming-deadlines-panel"
+                   id="upcomingDeadlinesPanel">
+
+                <div class="upcoming-panel-header">
+
+                    <h2>Deadline sắp tới</h2>
+
+                    <p>
+                        Các công việc cần chú ý.
+                    </p>
+
+                </div>
+
+
+                <div class="upcoming-deadlines-list"
+                     id="upcomingDeadlinesList">
+
+                    <!--
+                        JavaScript lấy dữ liệu từ Supabase
+                        và render danh sách deadline tại đây.
+                    -->
+
+                    <div class="calendar-empty-state"
+                         id="upcomingEmptyState">
+
+                        <i data-lucide="calendar-check"></i>
+
+                        <p>Đang tải dữ liệu...</p>
+
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </section>
+
+    </main>
+
+
+    <!-- ==================================
+         TASK DETAIL DRAWER
+    =================================== -->
+
+    <div class="calendar-detail-overlay"
+         id="calendarDetailOverlay"
+         hidden>
+
+        <aside class="calendar-detail-drawer"
+               id="calendarDetailDrawer"
+               aria-labelledby="calendarDetailTitle">
+
+
+            <!-- DRAWER HEADER -->
+
+            <div class="detail-drawer-header">
+
+                <h2>Chi tiết công việc</h2>
+
+                <button type="button"
+                        class="detail-close-btn"
+                        id="closeCalendarDetailBtn"
+                        aria-label="Đóng chi tiết">
+
+                    <i data-lucide="x"></i>
+
+                </button>
+
+            </div>
+
+
+            <!-- DRAWER CONTENT -->
+
+            <div class="detail-drawer-content"
+                 id="calendarDetailContent">
+
+                <div class="detail-task-header">
+
+                    <h3 id="calendarDetailTitle">
+                        <!-- Tên công việc -->
+                    </h3>
+
+                    <div class="detail-task-status"
+                         id="calendarDetailStatus">
+                        <!-- Trạng thái -->
+                    </div>
+
+                </div>
+
+
+                <!-- MÔ TẢ -->
+
+                <section class="calendar-detail-section">
+
+                    <h4>Mô tả công việc</h4>
+
+                    <p id="calendarDetailDescription">
+                        <!-- Mô tả lấy từ Supabase -->
+                    </p>
+
+                </section>
+
+
+                <!-- THÔNG TIN CÔNG VIỆC -->
+
+                <section class="calendar-detail-meta"
+                         id="calendarDetailMeta">
+
+                    <div class="detail-meta-item">
+
+                        <span>Nhóm</span>
+
+                        <strong id="calendarDetailGroup">—</strong>
+
+                    </div>
+
+                    <div class="detail-meta-item">
+
+                        <span>Mã công việc</span>
+
+                        <strong id="calendarDetailTaskId">—</strong>
+
+                    </div>
+
+                    <div class="detail-meta-item">
+
+                        <span>Sự kiện</span>
+
+                        <strong id="calendarDetailEvent">—</strong>
+
+                    </div>
+
+                    <div class="detail-meta-item">
+
+                        <span>Loại công việc</span>
+
+                        <strong id="calendarDetailType">—</strong>
+
+                    </div>
+
+                    <div class="detail-meta-item">
+
+                        <span>Mức ưu tiên</span>
+
+                        <strong id="calendarDetailPriority">—</strong>
+
+                    </div>
+
+                    <div class="detail-meta-item">
+
+                        <span>Người thực hiện</span>
+
+                        <strong id="calendarDetailAssignees">—</strong>
+
+                    </div>
+
+
+                    <div class="detail-meta-item">
+
+                        <span>Bắt đầu</span>
+
+                        <strong id="calendarDetailStartDate">—</strong>
+
+                    </div>
+
+                    <div class="detail-meta-item">
+
+                        <span>Deadline</span>
+
+                        <strong id="calendarDetailDeadline">—</strong>
+
+                    </div>
+
+                    <div class="detail-meta-item">
+
+                        <span>Lên sóng</span>
+
+                        <strong id="calendarDetailOnAir">—</strong>
+
+                    </div>
+
+                    <div class="detail-meta-item">
+
+                        <span>Thời lượng</span>
+
+                        <strong id="calendarDetailDuration">—</strong>
+
+                    </div>
+
+                </section>
+
+
+                <!-- TIẾN ĐỘ -->
+
+                <section class="calendar-detail-section">
+
+                    <div class="detail-progress-header">
+
+                        <h4>Tiến độ công việc</h4>
+
+                        <strong id="calendarDetailProgress">—</strong>
+
+                    </div>
+
+                    <div class="detail-progress-track">
+
+                        <div class="detail-progress-fill"
+                             id="calendarDetailProgressBar">
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- GHI CHÚ -->
+
+                <section class="calendar-detail-section">
+
+                    <h4>Ghi chú sự kiện</h4>
+
+                    <p id="calendarDetailNote">
+                        <!-- Chỉ hiển thị khi có dữ liệu phù hợp -->
+                    </p>
+
+                </section>
+
+
+                <!-- THÔNG BÁO QUYỀN -->
+
+                <div class="detail-permission-note">
+
+                    <i data-lucide="lock"></i>
+
+                    <span>
+                        Thông tin nhóm và lịch thực hiện là thông tin
+                        được giao cho bạn.
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- DRAWER FOOTER -->
+
+            <div class="detail-drawer-footer">
+
+                <button type="button"
+                        class="btn btn-primary"
+                        id="openFullTaskBtn">
+
+                    Xem chi tiết công việc
+
+                </button>
+
+                <small>
+                    Mở công việc cá nhân để xem đầy đủ nội dung.
+                </small>
+
+            </div>
+
+        </aside>
+
+    </div>
+
+
+</div>
+
+
+<!-- ==================================
+     SCRIPTS
+=================================== -->
+
+<script src="../js/sidebar.js"></script>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Supabase Client -->
+<script src="../js/supabase.js"></script>
+
+<!-- Calendar and Supabase data logic -->
+<script src="../js/task-calendar.js"></script>
+
+<!-- Lucide Icons -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+    });
+</script>
+
+</body>
+</html>

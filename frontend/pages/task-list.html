@@ -1,0 +1,619 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách công việc | AECPT</title>
+    <script src="../js/i18n.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../styles/sidebar.css">
+    <link rel="stylesheet" href="../styles/task-list.css">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+
+<div class="app-container">
+
+    <!-- ==================================
+         SIDEBAR
+    =================================== -->
+
+    <div id="sidebar-container"></div>
+
+
+    <!-- ==================================
+         MAIN CONTENT
+    =================================== -->
+
+    <main class="main-content">
+
+        <!-- Page Header -->
+        <header class="page-header">
+
+            <div class="page-heading">
+                <h1>Danh sách công việc</h1>
+
+                <p>
+                    Theo dõi các công việc đang được triển khai trong ban Multimedia.
+                </p>
+            </div>
+
+            <div class="page-actions">
+
+                <div class="search-box">
+                    <i data-lucide="search"></i>
+
+                    <input
+                        type="search"
+                        id="taskSearch"
+                        placeholder="Tìm kiếm công việc..."
+                        autocomplete="off"
+                    >
+                </div>
+
+                <button type="button"
+                        class="filter-toggle-btn"
+                        id="toggleTaskFilters">
+
+                    <i data-lucide="sliders-horizontal"></i>
+                    Bộ lọc
+
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- ==================================
+             SUMMARY
+        =================================== -->
+
+        <section class="task-summary">
+
+            <div class="summary-context">
+                Tổng quan ban Multimedia · Tất cả nhóm
+            </div>
+
+            <div class="summary-grid">
+
+                <article class="summary-card">
+
+                    <div class="summary-card-header">
+                        <span>Tổng công việc</span>
+                        <i data-lucide="list-checks"></i>
+                    </div>
+
+                    <strong id="totalTasksCount"
+                            data-bind="summary.total">—</strong>
+
+                </article>
+
+
+                <article class="summary-card">
+
+                    <div class="summary-card-header">
+                        <span>Chưa bắt đầu</span>
+                        <i data-lucide="circle"></i>
+                    </div>
+
+                    <strong id="notStartedCount"
+                            data-bind="summary.not_started">—</strong>
+
+                </article>
+
+
+                <article class="summary-card">
+
+                    <div class="summary-card-header">
+                        <span>Đang thực hiện</span>
+                        <i data-lucide="loader-circle"></i>
+                    </div>
+
+                    <strong id="inProgressCount"
+                            data-bind="summary.in_progress">—</strong>
+
+                </article>
+
+
+                <article class="summary-card">
+
+                    <div class="summary-card-header">
+                        <span>Đã hoàn thành</span>
+                        <i data-lucide="circle-check"></i>
+                    </div>
+
+                    <strong id="completedCount"
+                            data-bind="summary.completed">—</strong>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================================
+             GROUP FILTER
+        =================================== -->
+
+        <section class="task-filter-section">
+
+            <div class="group-filter-list" id="groupFilterTabs">
+
+                <button type="button"
+                        class="group-filter active"
+                        data-group="">
+                    Tất cả nhóm
+                </button>
+
+                <button type="button"
+                        class="group-filter"
+                        data-group="Edit">
+                    Edit
+                </button>
+
+                <button type="button"
+                        class="group-filter"
+                        data-group="Design">
+                    Design
+                </button>
+
+                <button type="button"
+                        class="group-filter"
+                        data-group="Content">
+                    Content
+                </button>
+
+                <button type="button"
+                        class="group-filter"
+                        data-group="Tech">
+                    Tech
+                </button>
+
+                <button type="button"
+                        class="group-filter"
+                        data-group="Photo">
+                    Photo
+                </button>
+
+            </div>
+
+
+            <!-- Status Filter + Sorting -->
+
+            <div class="filter-toolbar">
+
+                <div class="status-filter-list">
+
+                    <button type="button"
+                            class="status-tab active"
+                            data-status="all">
+                        Tất cả trạng thái
+                    </button>
+
+                    <button type="button"
+                            class="status-tab"
+                            data-status="not_started">
+                        Chưa bắt đầu
+                    </button>
+
+                    <button type="button"
+                            class="status-tab"
+                            data-status="in_progress">
+                        Đang thực hiện
+                    </button>
+
+                    <button type="button"
+                            class="status-tab"
+                            data-status="pending_review">
+                        Chờ duyệt
+                    </button>
+
+                    <button type="button"
+                            class="status-tab"
+                            data-status="completed">
+                        Đã hoàn thành
+                    </button>
+
+                </div>
+
+
+                <div class="sort-container">
+
+                    <label for="taskSort">
+                        <i data-lucide="list-filter"></i>
+                    </label>
+
+                    <select id="taskSort" name="sort">
+                        <option value="deadline_asc">
+                            Deadline gần nhất
+                        </option>
+
+                        <option value="deadline_desc">
+                            Deadline xa nhất
+                        </option>
+
+                        <option value="on_air_desc">
+                            Ngày lên sóng mới nhất
+                        </option>
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <!-- Advanced Filters -->
+
+            <div class="advanced-filter-panel"
+                 id="advancedTaskFilters"
+                 hidden>
+
+                <div class="filter-field">
+
+                    <label for="groupFilter">
+                        Nhóm phụ trách
+                    </label>
+
+                    <select id="groupFilter">
+                        <option value="">Tất cả nhóm</option>
+                        <option value="Edit">Edit</option>
+                        <option value="Design">Design</option>
+                        <option value="Content">Content</option>
+                        <option value="Tech">Tech</option>
+                        <option value="Photo">Photo</option>
+                    </select>
+
+                </div>
+
+                <div class="filter-field">
+
+                    <label for="memberFilter">
+                        Thành viên phụ trách
+                    </label>
+
+                    <select id="memberFilter">
+                        <option value="">Tất cả thành viên</option>
+                    </select>
+
+                </div>
+
+
+                <button type="button"
+                        id="resetTaskFilters"
+                        class="reset-filter-btn">
+                    Xóa bộ lọc
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================================
+             TASK TABLE
+        =================================== -->
+
+        <section class="task-table-section">
+
+            <div class="table-result-info"
+                 id="taskResultInfo"
+                 aria-live="polite">
+
+                <!-- Tổng số công việc sau khi lọc -->
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table class="task-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Tên công việc</th>
+                            <th>Sự kiện / Loại</th>
+                            <th>Nhóm phụ trách</th>
+                            <th>Người thực hiện</th>
+                            <th>Ngày lên sóng</th>
+                            <th>Deadline gói</th>
+                            <th>Tình trạng đăng</th>
+                            <th>Trạng thái</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="taskTableBody">
+
+                        <!--
+                            DỮ LIỆU CÔNG VIỆC ĐƯỢC RENDER
+                            TỪ DATABASE BẰNG JAVASCRIPT.
+                        -->
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- Table Footer -->
+
+            <div class="table-footer">
+
+                <span id="taskTableInfo">
+                    <!-- Số lượng công việc hiển thị -->
+                </span>
+
+
+                <div class="pagination">
+
+                    <button type="button"
+                            id="previousPage"
+                            class="pagination-btn"
+                            aria-label="Trang trước">
+
+                        <i data-lucide="chevron-left"></i>
+
+                    </button>
+
+
+                    <span id="currentPageLabel">
+                        —
+                    </span>
+
+
+                    <button type="button"
+                            id="nextPage"
+                            class="pagination-btn"
+                            aria-label="Trang tiếp theo">
+
+                        <i data-lucide="chevron-right"></i>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================================
+             FOOTNOTE
+        =================================== -->
+
+        <div class="page-note">
+
+            <i data-lucide="info"></i>
+
+            <span>
+                Bạn có thể xem công việc toàn ban và chỉ cập nhật trạng thái
+                đối với công việc của mình.
+            </span>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+<!-- ==================================================
+     TASK DETAIL POPUP
+     Dạng panel trượt từ bên phải
+=================================================== -->
+
+<div class="modal-overlay"
+     id="taskDetailModal"
+     hidden>
+
+    <div class="detail-drawer"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="detailDrawerTitle">
+
+
+        <!-- Popup Header -->
+
+        <header class="drawer-header">
+
+            <h2 id="detailDrawerTitle">
+                Chi tiết công việc
+            </h2>
+
+            <button type="button"
+                    class="drawer-close-btn"
+                    data-close-modal="taskDetailModal"
+                    aria-label="Đóng">
+
+                <i data-lucide="x"></i>
+
+            </button>
+
+        </header>
+
+
+        <!-- Popup Content -->
+
+        <div class="drawer-content"
+             id="taskDetailContent">
+
+            <!--
+                Nội dung chi tiết sẽ được JavaScript
+                lấy từ API và render tại đây.
+
+                Không khai báo dữ liệu công việc mẫu.
+            -->
+
+        </div>
+
+
+        <!-- Popup Footer -->
+
+        <footer class="drawer-footer">
+
+            <button type="button"
+                    class="btn btn-primary"
+                    id="viewFullTaskBtn">
+
+                Xem chi tiết
+
+            </button>
+
+            <button type="button"
+                    class="btn btn-secondary"
+                    id="openUpdateProgress">
+
+                Cập nhật trạng thái
+
+            </button>
+
+        </footer>
+
+    </div>
+
+</div>
+
+
+<!-- ==================================================
+     UPDATE PROGRESS POPUP
+=================================================== -->
+
+<div class="modal-overlay"
+     id="updateProgressModal"
+     hidden>
+
+    <section class="progress-modal"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="progressModalTitle">
+
+
+        <!-- Modal Header -->
+
+        <header class="modal-header">
+
+            <div>
+                <h2 id="progressModalTitle">
+                    Cập nhật trạng thái
+                </h2>
+
+                <p>
+                    Cập nhật trạng thái công việc được giao cho bạn.
+                </p>
+            </div>
+
+            <button type="button"
+                    class="modal-close-btn"
+                    data-close-modal="updateProgressModal"
+                    aria-label="Đóng">
+
+                <i data-lucide="x"></i>
+
+            </button>
+
+        </header>
+
+
+        <!-- Assigned Task -->
+
+        <div class="assigned-task-card">
+
+            <i data-lucide="file-text"></i>
+
+            <div class="assigned-task-info">
+
+                <small>Công việc được giao</small>
+
+                <strong id="progressTaskTitle"></strong>
+
+            </div>
+
+            <span id="progressTaskGroup"></span>
+
+        </div>
+
+
+        <!-- Update Form -->
+
+        <form id="updateProgressForm"
+              enctype="multipart/form-data">
+
+
+            <div class="form-group">
+                <label for="taskStatusInput">Trạng thái</label>
+                <select id="taskStatusInput" name="status" required>
+                    <option value="not_started">Chưa bắt đầu</option>
+                    <option value="in_progress">Đang thực hiện</option>
+                    <option value="pending_review">Chờ duyệt</option>
+                    <option value="completed">Đã hoàn thành</option>
+                </select>
+                <small>
+                    Database hiện chỉ lưu trạng thái; phần trăm tiến độ,
+                    ghi chú và tệp đính kèm chưa được hỗ trợ.
+                </small>
+            </div>
+
+
+            <!-- Modal Footer -->
+
+            <footer class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-light"
+                        data-close-modal="updateProgressModal">
+
+                    Hủy
+
+                </button>
+
+                <button type="submit"
+                        class="btn btn-primary">
+
+                    Lưu cập nhật
+
+                </button>
+
+            </footer>
+
+        </form>
+
+    </section>
+
+</div>
+
+
+<!-- ==================================
+     JAVASCRIPT
+=================================== -->
+
+<script src="../js/sidebar.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/task-list.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+    });
+</script>
+
+</body>
+</html>

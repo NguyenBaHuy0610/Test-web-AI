@@ -1,0 +1,74 @@
+
+<aside class="sidebar">
+
+    <!-- Logo và tên ứng dụng -->
+    <div class="sidebar-brand">
+        <div class="brand-icon">
+            <img src="../assets/logo.png" alt="AECPT">
+        </div>
+        <span>AECPT</span>
+    </div>
+
+    <!-- Tên không gian làm việc -->
+    <p class="workspace-name">
+        KHÔNG GIAN MULTIMEDIA
+    </p>
+
+    <!-- Menu điều hướng -->
+    <nav class="sidebar-menu">
+
+        <a href="dashboard.html" class="menu-item" data-page="dashboard">
+            <i data-lucide="house"></i>
+            <span>Trang chủ</span>
+        </a>
+
+        <a href="my-tasks.html" class="menu-item" data-page="my-tasks">
+            <i data-lucide="circle-check"></i>
+            <span>Công việc của tôi</span>
+        </a>
+
+        <a href="task-list.html" class="menu-item" data-page="task-list">
+            <i data-lucide="list-todo"></i>
+            <span>Danh sách công việc</span>
+        </a>
+
+        <a href="task-calendar.html" class="menu-item" data-page="task-calendar">
+            <i data-lucide="calendar-days"></i>
+            <span>Lịch & Deadline</span>
+        </a>
+
+        <a href="members.html" class="menu-item" data-page="members">
+            <i data-lucide="users"></i>
+            <span>Thành viên</span>
+        </a>
+
+        <a href="history.html" class="menu-item" data-page="history">
+            <i data-lucide="history"></i>
+            <span>Lịch sử</span>
+        </a>
+
+    </nav>
+
+    <!-- Lịch sử trò chuyện với AI -->
+    <div class="chat-history" id="chatHistorySection" hidden>
+        <p class="section-label">LỊCH SỬ TRÒ CHUYỆN</p>
+        <div class="chat-history-list" id="chatHistoryList"></div>
+    </div>
+
+    <!-- Thông tin người dùng -->
+    <div class="sidebar-user" id="sidebarUser">
+
+        <div class="user-avatar" id="userAvatar">?</div>
+
+        <div class="user-info">
+            <strong id="userName">Đang tải...</strong>
+            <span id="userRole"></span>
+        </div>
+
+        <button class="setting-button" title="Cài đặt">
+            <i data-lucide="sliders-horizontal"></i>
+        </button>
+
+    </div>
+
+</aside>

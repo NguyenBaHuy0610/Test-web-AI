@@ -1,0 +1,279 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Trang chủ | AECPT</title>
+    <script src="../js/i18n.js"></script>
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../styles/sidebar.css">
+    <link rel="stylesheet" href="../styles/dashboard.css">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+
+    <div class="app-layout">
+
+        <!-- ==========================
+             SIDEBAR
+        =========================== -->
+
+        <div id="sidebar-container"></div>
+
+
+        <!-- ==========================
+             MAIN CONTENT
+        =========================== -->
+
+        <main class="main-content">
+
+            <!-- HEADER -->
+
+            <header class="topbar">
+
+                <div class="topbar-info">
+                    <h1>Trang chủ</h1>
+                    <p>Cùng trợ lý AI bắt đầu công việc của ban Multimedia.</p>
+                </div>
+
+            </header>
+
+
+            <!-- ==========================
+                 DASHBOARD CONTENT
+            =========================== -->
+
+            <section class="dashboard-content">
+
+                <div class="dashboard-flow" id="quickActions">
+                    <button
+                        class="no-event-card quick-card"
+                        type="button"
+                    >
+                        <span class="event-card-icon">
+                            <i data-lucide="calendar-days"></i>
+                        </span>
+                        <span class="event-card-copy">
+                            <strong>Chưa có sự kiện đang diễn ra</strong>
+                            <small>Tạo sự kiện để cùng AI lên kế hoạch và phối hợp công việc.</small>
+                        </span>
+                        <span class="event-card-action">+ Tạo sự kiện</span>
+                    </button>
+
+                    <div class="active-event-card" id="activeEventCard" style="display: none;">
+                        <div class="active-event-header">
+                            <span class="active-event-badge"><span class="status-dot"></span> Sự kiện hiện tại</span>
+                            <span class="active-event-status" id="activeEventStatus">Đang diễn ra</span>
+                        </div>
+                        <strong id="activeEventName" class="active-event-name">Event</strong>
+                        <p id="activeEventDesc" class="active-event-desc">Mô tả sự kiện...</p>
+                        <div class="active-event-footer">
+                            <span id="activeEventDates" class="active-event-dates">--/--/----</span>
+                            <div class="active-event-actions">
+                                <span id="activeEventTasksCount" class="active-event-pill">
+                                    <i data-lucide="check-square"></i> 0 công việc
+                                </span>
+                                <button class="event-complete-button" id="completeEventButton" type="button">
+                                    Hoàn tất sự kiện
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <section class="chat-panel">
+                        <header class="chat-panel-header">
+                            <span class="chat-panel-icon"><i data-lucide="sparkles"></i></span>
+                            <span>
+                                <strong>Trợ lý AI</strong>
+                                <small>Đồng hành cùng sự kiện của bạn</small>
+                            </span>
+                        </header>
+
+                        <div class="chat-panel-content">
+                            <div class="chat-messages" id="chatMessages">
+                                <div class="assistant-intro">
+                                    <span>Trợ lý AI</span>
+                                    <p>
+                                        Chào <strong id="greetingName">bạn</strong>! Mình là trợ lý AI của ban Multimedia.
+                                        Hãy tạo sự kiện để bắt đầu lên kế hoạch, chia việc và theo dõi tiến độ đúng ngữ cảnh.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="quick-actions">
+                                <button
+                                    class="quick-card"
+                                    type="button"
+                                    data-prompt="Hôm nay mình có những công việc nào cần hoàn thành?"
+                                >
+                                    <span class="quick-icon"><i data-lucide="circle-check"></i></span>
+                                    <span class="quick-card-text">
+                                        <strong>Công việc hôm nay</strong>
+                                        <small>Xem các task cần hoàn thành.</small>
+                                    </span>
+                                </button>
+
+                                <button
+                                    class="quick-card"
+                                    type="button"
+                                    data-prompt="Cho mình biết những deadline sắp tới."
+                                >
+                                    <span class="quick-icon"><i data-lucide="calendar-days"></i></span>
+                                    <span class="quick-card-text">
+                                        <strong>Deadline sắp tới</strong>
+                                        <small>Kiểm tra những deadline gần nhất.</small>
+                                    </span>
+                                </button>
+
+                                <button
+                                    class="quick-card"
+                                    type="button"
+                                    data-prompt="Tôi muốn tạo timeline kế hoạch cho một sự kiện mới."
+                                >
+                                    <span class="quick-icon"><i data-lucide="chart-no-axes-column-increasing"></i></span>
+                                    <span class="quick-card-text">
+                                        <strong>Lập timeline sự kiện</strong>
+                                        <small>AI gợi ý &amp; tính toán đường găng CPM.</small>
+                                    </span>
+                                </button>
+                            </div>
+
+                            <form class="chat-composer" id="chatForm">
+                                <div class="composer-attachments" id="attachmentPreviewList" hidden></div>
+                                <div class="composer-input-row">
+                                    <button
+                                        class="attach-button"
+                                        type="button"
+                                        id="attachButton"
+                                        aria-label="Đính kèm tệp (.docx, .pdf, .xlsx, ảnh...)"
+                                        title="Đính kèm tệp (.docx, .pdf, .xlsx, ảnh...)"
+                                    >
+                                        <i data-lucide="plus"></i>
+                                    </button>
+                                    <input
+                                        type="text"
+                                        id="messageInput"
+                                        placeholder="Nhắn tin với trợ lý AI hoặc kéo thả tệp vào đây..."
+                                        autocomplete="off"
+                                        aria-label="Nhập tin nhắn"
+                                    >
+                                    <input
+                                        type="file"
+                                        id="fileInput"
+                                        multiple
+                                        accept=".docx,.pdf,.xlsx,.xls,.csv,.txt,.md,.json,.png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+                                        hidden
+                                    >
+                                    <button
+                                        class="send-button"
+                                        id="sendButton"
+                                        type="submit"
+                                        aria-label="Gửi tin nhắn"
+                                    >
+                                        <i data-lucide="arrow-up"></i>
+                                    </button>
+                                </div>
+                            </form>
+
+                            <p class="ai-disclaimer">
+                                AI hỗ trợ gợi ý. Bạn chủ động xem xét nội dung.
+                            </p>
+                        </div>
+                    </section>
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <div class="event-modal-backdrop" id="createEventModal" hidden>
+        <section
+            class="event-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="createEventTitle"
+        >
+            <header class="event-modal-header">
+                <h2 id="createEventTitle">Tạo sự kiện</h2>
+                <button class="event-modal-close" id="closeCreateEventModal" type="button" aria-label="Đóng">
+                    <i data-lucide="x"></i>
+                </button>
+            </header>
+            <form id="createEventForm">
+                <label class="event-modal-field">
+                    <span>Tên sự kiện</span>
+                    <input
+                        id="newEventName"
+                        name="eventName"
+                        type="text"
+                        maxlength="120"
+                        placeholder="Ví dụ: Workshop mùa hè 2025"
+                        required
+                    >
+                </label>
+                <label class="event-modal-field">
+                    <span>Mô tả sự kiện</span>
+                    <textarea
+                        id="newEventDescription"
+                        name="eventDescription"
+                        rows="4"
+                        maxlength="1000"
+                        placeholder="Mô tả ngắn gọn về sự kiện..."
+                    ></textarea>
+                </label>
+                <p class="event-modal-feedback" id="createEventFeedback" role="status" aria-live="polite"></p>
+                <footer class="event-modal-actions">
+                    <button class="event-modal-cancel" id="cancelCreateEvent" type="button">Hủy</button>
+                    <button class="event-modal-submit" id="submitCreateEvent" type="submit">Tạo sự kiện</button>
+                </footer>
+            </form>
+        </section>
+    </div>
+
+    <!-- ==========================
+         JAVASCRIPT
+    =========================== -->
+
+    <!-- Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Supabase Connection -->
+    <script src="../js/supabase.js"></script>
+
+    <!-- Shared Sidebar -->
+    <script src="../js/sidebar.js"></script>
+
+    <!-- Groq AI Service -->
+    <script src="../config.js"></script>
+    <script src="../js/groq.js"></script>
+
+    <!-- Client-side File Parsers (Word, Excel, PDF) -->
+    <script src="../vendor/mammoth.browser.min.js"></script>
+    <script src="../vendor/xlsx.full.min.js"></script>
+    <script src="../vendor/pdf.min.js"></script>
+    <script src="../js/file-parser.js"></script>
+
+    <!-- Timeline Planning Engine (CPM Algorithm) -->
+    <script src="../js/timeline-engine.js"></script>
+
+    <!-- Page Script -->
+    <script src="../js/dashboard.js"></script>
+
+</body>
+</html>

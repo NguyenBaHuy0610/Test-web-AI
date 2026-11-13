@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name ="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập | AECPT</title>
+    <script src="../js/i18n.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="../styles/login.css">
+
+</head>
+
+<body>
+    <main class="login-layout">
+
+        <section class="intro-panel">
+            <a class="brand" href="#">
+                <img
+                src="../assets/logo.png"            
+                alt="MediaTask Logo"
+                class="brand-logo"
+                >
+                <span>AECPT</span>
+            </a>
+
+            <div class="intro-copy">
+                <span class="eyebrow">
+                    WORKSPACE FOR MULTIMEDIA
+                </span>
+
+                <h1>Quản lý công việc 
+                    <br>
+                    thông minh hơn
+                </h1>
+
+                <p>
+                    Trợ lý ảo đồng hành cùng ban Multimedia trong việc tổ chức, theo dõi và hoàn thành công việc.
+                </p>
+            </div>
+
+            <div class="illustration">
+                <div class="task-card">
+                    <div class="task-card-head">
+                        <strong>Kế hoạch sáng tạo</strong>
+                        <span>•••</span>
+                    </div>
+
+                    <div class="task-row    completed">
+                        <span class="task-check">✓</span>
+                        <div class="task-text">
+                            <strong>Lên ý tưởng nội dung</strong>
+                            <small>Nội dung • Đã hoàn thành</small>
+                        </div>
+                    </div>
+
+                    <div class="task-row">
+                        <span class="task-check"></span>
+                        <div class="task-text">
+                            <strong>Thiết kế ấn phẩm truyền thông</strong>
+                            <small>Thiết kế • Đang thực hiện</small>
+                        </div>
+                    </div>
+
+                    <div class="task-row">
+                        <span class="task-check"></span>
+                        <div class="task-text">
+                            <strong>Hoàn thiện video sự kiện</strong>
+                            <small>Sản xuất • Hôm nay</small>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="note">
+                    <span>✓</span>
+                    
+                    <div>
+                        <strong>Mỗi việc, một bước tiến</strong>
+                        <small>Cùng nhau hoàn thành</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="intro-footer">
+                PLAN SMARTER - CREATE BETTER
+            </div>
+        </section>
+
+        <section class="form-panel">
+            <div class="login-box">
+                <div class="form-heading">
+                    <span class="welcom-lable">
+                        WELCOME BACK
+                    </span>
+
+                    <h2>
+                        Chào mừng trở lại!
+                    </h2>
+
+                    <p>
+                        Đăng nhập vào không gian làm việc của ban Multimedia
+                    </p>
+
+                </div>
+
+                <form id="loginForm">
+                    <div class="field-group">
+                        <label for="email">
+                            Email công việc
+                        </label>
+
+                        <div class="input-wrap">
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                placeholder="Nhập email công việc"
+                                required
+                            >
+                        </div>
+
+                        <small id="emailError" class="field-error"></small>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="password">
+                            Mật khẩu
+                        </label>
+
+                        <div class="input-wrap">
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Nhập mật khẩu"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                id="togglePassword"
+                                class="password-toggle"
+                            >
+                                Hiện
+                            </button>
+
+                            <small id="passwordError" class="field-error"></small>
+                        </div>
+                        <div class="form-options">
+                            <label class="remember-option">
+                                <input
+                                    type="checkbox"
+                                    id="rememberMe"
+                                >
+                                <span>Ghi nhớ đăng nhập</span>
+                            </label>
+                            <button
+                                type="button"
+                                id="forgotPassword"
+                                class="text-button"
+                            >
+                                Quên mật khẩu?
+                            </button>
+                        </div>
+
+                        <button
+                            type="submit"
+                            class="submit-button"
+                        >
+                            Đăng nhập 
+                        </button>
+
+                        <p  
+                            id="formFeedback"
+                            class="form-feedback"
+                        ></p>
+                    </div>
+                </form>
+
+                <p class="auth-switch">
+                    Chưa có tài khoản?
+                    <button type="button" class="text-button" id="showSignup">Đăng ký</button>
+                </p>
+
+                <form id="signupForm" hidden>
+                    <div class="field-group">
+                        <label for="signupName">Họ và tên</label>
+                        <div class="input-wrap">
+                            <input type="text" id="signupName" name="fullName"
+                                   placeholder="Nhập họ và tên" autocomplete="name"
+                                   maxlength="100" required>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="signupEmail">Email công việc</label>
+                        <div class="input-wrap">
+                            <input type="email" id="signupEmail" name="email"
+                                   placeholder="Nhập email công việc" autocomplete="email" required>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label for="signupPassword">Mật khẩu</label>
+                        <div class="input-wrap">
+                            <input type="password" id="signupPassword" name="password"
+                                   placeholder="Tối thiểu 8 ký tự" autocomplete="new-password"
+                                   minlength="8" required>
+                            <button type="button" id="toggleSignupPassword" class="password-toggle">Hiện</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-button" id="signupSubmit">Tạo tài khoản</button>
+                    <p class="form-feedback" id="signupFeedback" role="status" aria-live="polite"></p>
+                    <p class="signup-notice">
+                        Tạo tài khoản chưa tự cấp quyền truy cập workspace. Trưởng nhóm cần liên kết tài khoản
+                        với thành viên trong hệ thống.
+                    </p>
+                </form>
+
+                <p class="auth-switch signup-switch" id="showLoginRow" hidden>
+                    Đã có tài khoản?
+                    <button type="button" class="text-button" id="showLogin">Đăng nhập</button>
+                </p>
+
+                <div class="form-driver"></div>
+
+                <p class="system-note">
+                    Đây là hệ thống nội bộ dành riêng cho thành viên ban Multimedia.
+                </p>
+
+                <p class="copyright">
+                    © 2026 AECPT <span>•</span> Nhóm 7Wonders
+                </p>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Supabase Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Supabase Connection -->
+    <script src="../js/supabase.js"></script>
+    
+    <script src="../js/login.js"></script>
+</body>
+</html>

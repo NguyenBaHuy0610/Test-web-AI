@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cài đặt | AECPT</title>
+    <script src="../js/i18n.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles/sidebar.css">
+    <link rel="stylesheet" href="../styles/setting.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+<div class="app-container">
+    <div id="sidebar-container"></div>
+    <main class="main-content">
+        <header class="page-header">
+            <div class="page-heading">
+                <h1>Cài đặt</h1>
+                <p>Quản lý thông tin tài khoản và bảo mật của bạn.</p>
+            </div>
+        </header>
+
+    <div class="settings-layout">
+      <section class="settings-card notification-settings-card" aria-labelledby="notification-settings-title">
+        <div class="notification-settings-heading">
+          <div>
+            <h2 id="notification-settings-title">Cài đặt thông báo</h2>
+            <p>Tùy chỉnh thông báo và nhắc hạn cho tài khoản của bạn.</p>
+          </div>
+          <button class="settings-icon-button" id="resetNotificationSettings" type="button" aria-label="Hủy thay đổi" title="Hủy thay đổi">×</button>
+        </div>
+
+        <div class="notification-account" id="notificationAccount">
+          <span class="notification-account-avatar" id="notificationAccountAvatar">?</span>
+          <span><strong id="notificationAccountName">Đang tải tài khoản…</strong><small id="notificationAccountRole">Đang tải vai trò…</small></span>
+        </div>
+
+        <h3 class="notification-section-title">Thông báo</h3>
+        <div class="notification-option">
+          <span><strong>Công việc mới</strong><small>Khi bạn được giao công việc.</small></span>
+          <label class="setting-switch"><input id="notifyNewTasks" type="checkbox" checked><span class="setting-switch-track"></span><span class="setting-switch-state">Bật</span></label>
+        </div>
+        <div class="notification-option">
+          <span><strong>Nhắc deadline</strong><small>Nhận nhắc nhở trước khi công việc đến hạn.</small></span>
+          <label class="setting-switch"><input id="notifyDeadlines" type="checkbox" checked><span class="setting-switch-track"></span><span class="setting-switch-state">Bật</span></label>
+        </div>
+        <div class="reminder-options" id="reminderOptions">
+          <label class="reminder-field"><span>Nhắc trước</span><select id="reminderLeadHours"><option value="1">1 giờ</option><option value="3">3 giờ</option><option value="6">6 giờ</option><option value="12">12 giờ</option><option value="24" selected>24 giờ</option><option value="48">48 giờ</option></select></label>
+          <label class="reminder-field"><span>Giờ nhận nhắc nhở</span><input id="reminderTime" type="time" value="08:00"></label>
+          <small>Giờ Việt Nam (GMT+7)</small>
+          <p id="reminderPreview">Mỗi ngày lúc 08:00, nhắc công việc đến hạn trong 24 giờ tới.</p>
+        </div>
+        <div class="notification-option notification-option-last">
+          <span><strong>Công việc quá hạn</strong><small>Nhắc các công việc chưa hoàn thành đã trễ deadline.</small></span>
+          <label class="setting-switch"><input id="notifyOverdue" type="checkbox" checked><span class="setting-switch-track"></span><span class="setting-switch-state">Bật</span></label>
+        </div>
+
+        <div class="notification-language-row">
+          <label for="settingsLanguage"><strong>Ngôn ngữ</strong></label>
+          <select id="settingsLanguage"><option value="vi">Tiếng Việt</option><option value="en">English</option></select>
+        </div>
+        <p class="notification-footnote">Các tùy chọn này chỉ áp dụng cho tài khoản của bạn.</p>
+        <p class="notification-save-status" id="notificationSaveStatus" role="status" aria-live="polite"></p>
+        <div class="notification-actions">
+          <button class="settings-button-secondary" id="cancelNotificationSettings" type="button">Hủy</button>
+          <button class="settings-button-primary" id="saveNotificationSettings" type="button">Lưu thay đổi</button>
+        </div>
+      </section>
+
+            <section class="settings-card" aria-labelledby="profileHeading">
+                <div class="settings-card-heading">
+                    <span class="settings-icon"><i data-lucide="user-round"></i></span>
+                    <div><h2 id="profileHeading">Thông tin tài khoản</h2><p>Tên hiển thị được lưu trong hồ sơ Supabase Auth của bạn.</p></div>
+                </div>
+                <form id="profileForm" class="settings-form">
+                    <label for="displayName">Tên hiển thị</label>
+                    <input id="displayName" name="displayName" type="text" maxlength="80" autocomplete="name" placeholder="Nhập tên của bạn" required>
+                    <label for="accountEmail">Email đăng nhập</label>
+                    <input id="accountEmail" type="email" readonly aria-describedby="emailHelp">
+                    <small id="emailHelp">Email hiện chỉ hiển thị; hãy liên hệ quản trị viên nếu cần đổi email.</small>
+                    <div class="form-actions"><p class="form-message" id="profileMessage" role="status" aria-live="polite"></p><button class="button button-primary" type="submit" id="saveProfileButton">Lưu thay đổi</button></div>
+                </form>
+            </section>
+
+            <section class="settings-card" aria-labelledby="passwordHeading">
+                <div class="settings-card-heading">
+                    <span class="settings-icon"><i data-lucide="key-round"></i></span>
+                    <div><h2 id="passwordHeading">Đổi mật khẩu</h2><p>Dùng mật khẩu mới để đăng nhập trong những lần sau.</p></div>
+                </div>
+                <form id="passwordForm" class="settings-form">
+                    <label for="currentPassword">Mật khẩu hiện tại</label>
+                    <input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu hiện tại" required>
+                    <label for="newPassword">Mật khẩu mới</label>
+                    <input id="newPassword" name="newPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Ít nhất 8 ký tự" required>
+                    <label for="confirmPassword">Nhập lại mật khẩu mới</label>
+                    <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Nhập lại mật khẩu" required>
+                    <div class="form-actions"><p class="form-message" id="passwordMessage" role="status" aria-live="polite"></p><button class="button button-primary" type="submit" id="changePasswordButton">Cập nhật mật khẩu</button></div>
+                </form>
+            </section>
+
+            <section class="settings-card settings-session-card" aria-labelledby="sessionHeading">
+                <div class="settings-card-heading">
+                    <span class="settings-icon"><i data-lucide="shield-check"></i></span>
+                    <div><h2 id="sessionHeading">Phiên đăng nhập</h2><p>Đăng xuất tài khoản này khỏi thiết bị hiện tại.</p></div>
+                </div>
+                <button class="button button-danger" type="button" id="signOutButton"><i data-lucide="log-out"></i> Đăng xuất</button>
+                <p class="form-message" id="sessionMessage" role="status" aria-live="polite"></p>
+            </section>
+        </div>
+    </main>
+</div>
+<script src="../js/sidebar.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/setting.js"></script>
+</body>
+</html>

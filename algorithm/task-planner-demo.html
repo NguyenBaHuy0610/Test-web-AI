@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Demo thuật toán lập kế hoạch sự kiện</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f2f5f8;--sf:#fff;--tx:#14213d;--mu:#5b6678;--ln:#d9e0ea;--ac:#0e7c86;--acs:#d7f0f2;--wn:#a15c00;--wns:#fdecc8;--er:#b3261e;--ers:#fbdedb;--ok:#1f7a45;--oks:#d9f1e2;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1624;--sf:#182234;--tx:#e8edf6;--mu:#9aa6bb;--ln:#2a3750;--ac:#4cc3cd;--acs:#12353a;--wn:#f0b252;--wns:#3a2d10;--er:#ff8a80;--ers:#3d1a18;--ok:#6fd49a;--oks:#14301f}}
+:root[data-theme="dark"]{--bg:#0f1624;--sf:#182234;--tx:#e8edf6;--mu:#9aa6bb;--ln:#2a3750;--ac:#4cc3cd;--acs:#12353a;--wn:#f0b252;--wns:#3a2d10;--er:#ff8a80;--ers:#3d1a18;--ok:#6fd49a;--oks:#14301f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 "Be Vietnam Pro",system-ui,sans-serif}
+main{max-width:860px;margin:0 auto;padding:16px 14px 40px}
+h1{font-size:21px;margin:4px 0 2px}p.sub{margin:0 0 14px;color:var(--mu);font-size:13px}
+nav{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px}
+nav button{flex:none;border:1px solid var(--ln);background:var(--sf);color:var(--tx);padding:8px 13px;border-radius:8px;font:inherit;font-weight:600;cursor:pointer}
+nav button[aria-selected=true]{background:var(--ac);color:#fff;border-color:var(--ac)}
+section{display:block;margin-bottom:12px;background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:14px}
+section.on{display:block}
+label{display:block;font-weight:600;font-size:13px;margin:10px 0 4px}
+textarea,input,select{width:100%;box-sizing:border-box;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);color:var(--tx);border:1px solid var(--ln);border-radius:7px;padding:8px}
+textarea{min-height:110px}
+button.go{margin-top:12px;background:var(--ac);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.box{border-radius:8px;padding:9px 11px;margin:10px 0;font-size:13px;white-space:pre-wrap}
+.er{background:var(--ers);color:var(--er)}.wn{background:var(--wns);color:var(--wn)}.ok{background:var(--oks);color:var(--ok)}.in{background:var(--acs);color:var(--tx)}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--ln);white-space:nowrap}th{color:var(--mu);font-weight:600}
+.fl{display:inline-block;background:var(--wns);color:var(--wn);border-radius:5px;padding:0 6px;margin-right:3px;font-size:11px;font-weight:700}
+.g{position:relative;height:24px;margin:5px 0;background:var(--bg);border-radius:5px}
+.g i{position:absolute;top:0;bottom:0;border-radius:5px;background:var(--mu);opacity:.55}
+.g i.c{background:var(--ac);opacity:1}
+.g span{position:absolute;left:6px;top:2px;font-size:12px;font-weight:600;color:var(--tx);z-index:1;text-shadow:0 0 3px var(--sf)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}h3{font-size:15px;margin:16px 0 4px}h2{font-size:17px;margin:0 0 6px}
+.gt{display:grid;grid-template-columns:minmax(120px,30%) 1fr;gap:5px 10px;align-items:center;margin-top:6px}
+.gl{font-size:12.5px;line-height:1.3}.gl small{color:var(--mu)}
+.gk{position:relative;height:34px;background:var(--bg);border-radius:6px}
+.gk u{position:absolute;top:0;bottom:0;width:1px;background:var(--ln)}
+.gk i{position:absolute;top:8px;bottom:8px;border-radius:4px;background:var(--mu)}
+.gk i.c{background:var(--ac)}.gk i.s{background:transparent;border:1px dashed var(--mu);top:11px;bottom:11px}
+.gk b{position:absolute;top:9px;font-size:10px;color:var(--mu);transform:translateX(-50%)}.gk b:first-child{transform:none}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<h1>Demo lập kế hoạch sự kiện</h1>
+<p class="sub">Luồng: bạn nhập thời điểm bắt đầu và kết thúc sự kiện → AI tính on-air cho từng task (ở đây mô phỏng bằng quy tắc tính ngược, bản thật do Gemini) → code tính hạn nộp và feedback → gán việc → timeline và đường găng → cảnh báo. Cột start cho biết việc bắt đầu ngay khi tạo kế hoạch (creation) hay lúc sự kiện bắt đầu (event). Mọi tính toán chạy ngay trên trang, không gọi LLM.</p>
+
+<section id="s0"><h2>1. Dữ liệu đầu vào</h2>
+<div class="row" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))"><div><label for="st">Tạo sự kiện (bắt đầu kế hoạch)</label><input id="st" type="datetime-local" value="2026-11-02T08:00"></div><div><label for="ev">Bắt đầu sự kiện</label><input id="ev" type="datetime-local" value="2026-11-09T08:00"></div><div><label for="ee">Kết thúc sự kiện</label><input id="ee" type="datetime-local" value="2026-11-09T21:00"></div></div>
+<label for="tk">Task (CSV; duration = thời gian trôi qua của task, ghi giờ hoặc 2d = 2 ngày; effort = giờ công người làm thật sự bỏ ra, để trống = bằng duration; on-air do AI tính; start: creation = bắt đầu ngay khi tạo kế hoạch, event = lúc sự kiện bắt đầu, để trống = khi phụ thuộc xong; tên không chứa dấu phẩy)</label>
+<textarea id="tk" spellcheck="false">id,name,duration,roles,depends_on,complexity,on_air,start,effort
+T1,Viết caption mở đơn,2,content,,1,,creation,
+T2,Thiết kế standee,2d,design,,3,,creation,8
+T3,Chụp ảnh sự kiện,3,photo,,2,,event,
+T4,In standee,1d,design,T2,2,,,1
+T5,Quay clip highlight,2,design,,2,,event,</textarea>
+<label for="mb">Thành viên (CSV; schedule dạng "Mon 17-21; Wed 18-22", để trống = không giới hạn giờ)</label>
+<textarea id="mb" spellcheck="false">id,name,roles,quota,schedule
+M1,An,design;photo,,Mon 8-12; Mon 17-21; Wed 18-22
+M2,Bình,content,,Mon 8-12; Tue 8-12
+M3,Chi,photo;design,,Thu 13-18; Mon 8-12</textarea>
+<button class="go" id="run">Chạy thuật toán</button>
+<div id="msg"></div>
+</section>
+
+<section id="s1"><h2>2. Kế hoạch và timeline</h2><div id="plan"></div></section>
+
+<section id="s2"><h2>3. Cảnh báo sắp trễ</h2>
+<label for="now">Thời điểm hiện tại</label><input id="now" type="datetime-local">
+<button class="go" id="al">Kiểm tra cảnh báo</button><div id="alr"></div>
+</section>
+
+<section id="s3"><h2>4. Chỉnh sửa kế hoạch</h2>
+<h3>Xóa task (nối lại phụ thuộc)</h3>
+<div class="row"><select id="del"></select><button class="go" style="margin:0" id="delb">Xóa và tính lại</button></div>
+<div id="delr"></div>
+<h3>What-if: thử một thay đổi, không ghi đè kế hoạch</h3>
+<div class="row"><select id="wt"></select><input id="wd" type="number" min="0.5" step="0.5" placeholder="Thời lượng mới (giờ)"></div>
+<label for="wm">Đổi người làm</label><select id="wm"></select>
+<button class="go" id="wb">Thử thay đổi</button><div id="wr"></div>
+</section>
+
+<section id="s4"><h2>5. Kiểm tra vòng phụ thuộc</h2>
+<p class="sub" style="margin-top:0">Thử nhanh phát hiện vòng phụ thuộc: bấm nút, hệ thống làm T1 phụ thuộc T2 và T2 phụ thuộc T1 trong dữ liệu mẫu.</p>
+<button class="go" id="cyc">Tạo vòng và chạy</button><div id="cycr"></div>
+</section>
+</main>
+<script>
+const $=s=>document.querySelector(s),H=36e5,DAY=864e5,EP=1e-9,AF=["NO_ROLE_MATCH","OVER_QUOTA","NO_FREE_TIME"];
+const esc=s=>String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const p2=n=>String(n).padStart(2,"0"),fmt=ms=>{const d=new Date(ms);return`${p2(d.getHours())}:${p2(d.getMinutes())} ${p2(d.getDate())}/${p2(d.getMonth()+1)}`};
+const isoL=ms=>{const d=new Date(ms);return`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`};
+const sh=ms=>{const d=new Date(ms),h=d.getHours();if(h<7){d.setDate(d.getDate()-1);d.setHours(22,0,0,0)}else if(h>22||(h===22&&(d.getMinutes()||d.getSeconds()))){d.setHours(22,0,0,0)}return +d};
+const fd=h=>h>=24?`${+(h/24).toFixed(1)} ngày`:`${h}h`;
+const WD={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6},sp=(t,k)=>t?t.split(k).map(x=>x.trim()).filter(Boolean):[];
+const csv=t=>{const L=t.trim().split(/\n/).map(s=>s.split(",").map(x=>x.trim())),h=L.shift();return L.map(r=>Object.fromEntries(h.map((c,i)=>[c,r[i]||""])))};
+const box=(c,t)=>`<div class="box ${c}">${esc(t)}</div>`;
+function parseTasks(t){const need=["id","name","duration","roles","depends_on","complexity"],h=t.trim().split(/\n/)[0].split(",").map(x=>x.trim()),miss=need.filter(c=>!h.includes(c));
+if(miss.length)throw Error("Thiếu cột: "+miss.join(", "));const err=[],out=[],seen=new Set(),PS=+new Date($("#st").value),PE=+new Date($("#ee").value);
+csv(t).forEach((o,n)=>{const dr=String(o.duration||""),d=/d$/i.test(dr)?parseFloat(dr)*24:+dr,c=+o.complexity,w=`Dòng ${n+2} (${o.id||"?"})`;
+if(!o.id)return err.push(`Dòng ${n+2}: thiếu id`);if(seen.has(o.id))err.push(`${w}: id trùng`);seen.add(o.id);
+if(!(d>0))return err.push(`${w}: duration phải là số > 0`);if(d>336)return err.push(`${w}: duration ${d}h vượt 14 ngày, nghi AI sinh sai`);if(![1,2,3].includes(c))return err.push(`${w}: complexity phải là 1, 2 hoặc 3`);
+let oa=null;if(o.on_air){oa=+new Date(o.on_air.replace(" ","T"));if(isNaN(oa))return err.push(`${w}: on_air phải có dạng 2026-11-09 08:00`);if(oa<PS)return err.push(`${w}: on_air nằm trước lúc bắt đầu kế hoạch`);if(oa>PE)return err.push(`${w}: on_air nằm sau ngày sự kiện`)}
+const sm=(o.start||(/^(yes|y|1|có|co)$/i.test(o.live||"")?"event":"")).toLowerCase();if(!["","creation","event"].includes(sm))return err.push(`${w}: start phải là creation, event hoặc để trống`);const er=String(o.effort||""),ef=er?(/d$/i.test(er)?parseFloat(er)*24:+er):d;if(!(ef>0))return err.push(`${w}: effort phải là số > 0`);if(ef>d+1e-9)return err.push(`${w}: effort ${ef}h lớn hơn thời lượng ${d}h`);
+out.push({id:o.id,name:o.name,duration:d,roles:sp(o.roles,";"),deps:sp(o.depends_on,";"),cx:c,onAir:oa,effort:ef,live:sm==="event",now:sm==="creation",flags:[],dl:null,fb:null,as:null,bk:null})});
+if(err.length)throw Error(err.join("\n"));if(out.length<1)throw Error("Chưa có task nào");if(out.length>50)throw Error(`Tối đa 50 task, bạn đang nhập ${out.length}`);return out}
+function parseMembers(t){const m=csv(t).map(o=>{let sch=null;if(o.schedule){sch={};sp(o.schedule,";").forEach(x=>{const [d,r]=x.split(/\s+/),[a,b]=(r||"").split("-").map(Number);(sch[WD[d]]??=[]).push([a,b])});sch.weekly=Object.values(sch).flat().reduce((s,[a,b])=>s+b-a,0)}
+return{id:o.id,name:o.name,roles:sp(o.roles,";"),quota:o.quota?+o.quota:null,sch}});if(m.length>30)throw Error("Tối đa 30 thành viên");return m}
+function free(sch,s,e){let tot=0;const d=new Date(s);d.setHours(0,0,0,0);while(d<e){for(const[a,b]of sch[d.getDay()]||[]){const x=Math.max(+d+a*H,s),y=Math.min(+d+b*H,e);if(y>x)tot+=(y-x)/H}d.setDate(d.getDate()+1)}return tot}
+function checkDep(T){const ids=new Set(T.map(t=>t.id)),pr=[];T.forEach(t=>t.deps.forEach(d=>{if(d===t.id)pr.push(`${t.id} phụ thuộc chính nó`);else if(!ids.has(d))pr.push(`${t.id} phụ thuộc id không tồn tại: ${d}`)}));
+const v={};T.forEach(t=>v[t.id]=t.deps.filter(d=>ids.has(d)&&d!==t.id));const L=layers(T,v),done=new Set(L.flat()),rem=T.map(t=>t.id).filter(i=>!done.has(i));
+let cycle=[];if(rem.length){let c=rem.sort()[0];const seen=[];while(!seen.includes(c)){seen.push(c);c=v[c].filter(d=>rem.includes(d)).sort()[0]}cycle=[...seen.slice(seen.indexOf(c)),c];pr.push("Vòng phụ thuộc: "+cycle.join(" → "))}return{pr,cycle}}
+function layers(T,v){v=v||Object.fromEntries(T.map(t=>[t.id,t.deps.filter(d=>T.some(x=>x.id===d)&&d!==t.id)]));const ind={},ch={};
+T.forEach(t=>{ind[t.id]=v[t.id].length;ch[t.id]=[]});T.forEach(t=>v[t.id].forEach(d=>ch[d].push(t.id)));
+let cur=T.map(t=>t.id).filter(i=>!ind[i]).sort();const out=[];while(cur.length){out.push(cur);const n=[];cur.forEach(i=>ch[i].forEach(c=>{if(!--ind[c])n.push(c)}));cur=n.sort()}return out}
+function deadlines(T,S){const E=+new Date($("#ev").value),by=Object.fromEntries(T.map(t=>[t.id,t])),ch={};T.forEach(t=>ch[t.id]=[]);T.forEach(t=>t.deps.forEach(d=>by[d]&&d!==t.id&&ch[d].push(t)));
+layers(T).flat().reverse().forEach(i=>{const t=by[i];if(t.live){t.flags=["LIVE"];t.air=E;t.dl=t.fb=null;return}t.flags=t.onAir==null?["ON_AIR_AUTO"]:[];if(t.now)t.flags.push("START_NOW");let a=t.onAir!=null?t.onAir:E;if(t.onAir==null)ch[i].forEach(c=>{if(c.dl!=null)a=Math.min(a,c.dl-c.duration*H)});t.air=a;const d=t.cx>=3?2:1;t.dl=sh(a-d*DAY);t.fb=sh(a-(7+t.cx)*H);
+if(t.dl<=S)t.flags.push("INFEASIBLE");else if((t.dl-S)/H<t.duration)t.flags.push("COMPRESSED")})}
+function assign(T,M,S,locked){const by=Object.fromEntries(T.map(t=>[t.id,t])),ld={},hr={};M.forEach(m=>{ld[m.id]=0;hr[m.id]=0});
+T.forEach(t=>{t.flags=t.flags.filter(f=>!AF.includes(f)&&f!=="WRONG_ROLE");if(!locked[t.id]){t.as=t.bk=null}});
+const fr=(m,t)=>m.sch?(t.dl==null?m.sch.weekly:free(m.sch,S,t.dl)):Infinity,rOk=(m,t)=>!t.roles.length||m.roles.some(r=>t.roles.includes(r));
+const EV=+new Date($("#ev").value),busy={},ok=(m,t)=>rOk(m,t)&&(m.quota==null||ld[m.id]<m.quota)&&(t.live?!busy[m.id]&&(!m.sch||free(m.sch,EV,EV+t.duration*H)>=t.duration-EP):(!t.now||!m.sch||free(m.sch,S,S+Math.min(t.duration,24)*H)>0)&&hr[m.id]+t.effort<=fr(m,t)+EP);
+const rk=(m,t)=>m.sch?hr[m.id]/Math.max(fr(m,t),1):ld[m.id]/(m.quota||10),fl=(t,f)=>{if(!t.flags.includes(f))t.flags.push(f)};
+layers(T).forEach(L=>{let p=[];L.forEach(i=>{const t=by[i],m=M.find(x=>x.id===locked[i]);if(m){t.as=m.id;ld[m.id]++;hr[m.id]+=t.effort;if(!rOk(m,t))fl(t,"WRONG_ROLE");if(m.quota!=null&&ld[m.id]>m.quota)fl(t,"OVER_QUOTA");if(hr[m.id]>fr(m,t)+EP)fl(t,"NO_FREE_TIME")}else p.push(t)});
+while(p.length){p.sort((a,b)=>M.filter(m=>ok(m,a)).length-M.filter(m=>ok(m,b)).length||(a.dl??1e18)-(b.dl??1e18)||(a.id<b.id?-1:1));const t=p.shift(),c=M.filter(m=>ok(m,t)).sort((a,b)=>rk(a,t)-rk(b,t)||(a.id<b.id?-1:1));
+if(!c.length){const ro=M.filter(m=>rOk(m,t));fl(t,!ro.length?"NO_ROLE_MATCH":ro.every(m=>m.quota!=null&&ld[m.id]>=m.quota)?"OVER_QUOTA":"NO_FREE_TIME");continue}
+t.as=c[0].id;t.bk=c[1]?c[1].id:null;ld[t.as]++;if(t.live)busy[t.as]=1;else hr[t.as]+=t.effort}})}
+function timeline(T,S){const by=Object.fromEntries(T.map(t=>[t.id,t])),ord=layers(T).flat(),ch={};T.forEach(t=>ch[t.id]=[]);T.forEach(t=>t.deps.forEach(d=>by[d]&&d!==t.id&&ch[d].push(t.id)));
+const es={},ef={},ls={},lf={},w=[];ord.forEach(i=>{const t=by[i];es[i]=Math.max(0,...t.deps.filter(d=>d in ef).map(d=>ef[d]));if(t.live){const L=(+new Date($("#ev").value)-S)/H;if(es[i]>L+EP)w.push(`Không kịp ${i}: việc chuẩn bị xong lúc ${es[i]}h, sự kiện bắt đầu lúc ${L}h`);else es[i]=L}if(t.now&&es[i]>EP)w.push(`${i} bắt đầu ngay khi tạo kế hoạch nhưng phải chờ phụ thuộc, xong lúc ${es[i]}h`);ef[i]=es[i]+t.duration});
+const end=Math.max(0,...Object.values(ef));[...ord].reverse().forEach(i=>{const t=by[i];let f=Math.min(end,...ch[i].map(c=>ls[c]));if(t.dl!=null)f=Math.min(f,(t.dl-S)/H);if(t.live)f=(+new Date($("#ev").value)-S)/H+t.duration;lf[i]=f;ls[i]=f-t.duration});
+T.forEach(t=>{if(t.dl!=null&&ef[t.id]>(t.dl-S)/H+EP)w.push(`Trễ deadline ${t.id}: dự kiến xong lúc ${ef[t.id]}h, hạn nộp lúc ${(t.dl-S)/H}h`)});
+const sc=ord.map(i=>({id:i,es:es[i],ef:ef[i],slack:ls[i]-es[i],crit:ls[i]-es[i]<=EP}));return{sc,end,path:sc.filter(x=>x.crit).sort((a,b)=>a.es-b.es||(a.id<b.id?-1:1)).map(x=>x.id),w}}
+function alerts(T,now){return T.filter(t=>t.dl!=null).map(t=>({t,l:(t.dl-now)/H})).filter(a=>a.l<=12).sort((a,b)=>a.l-b.l).map(a=>a.l<0?["er",`🔴 ${a.t.id} (${a.t.name}): ĐÃ QUÁ HẠN ${Math.abs(a.l).toFixed(1)} giờ`]:["wn",`🟡 ${a.t.id} (${a.t.name}): sắp trễ, còn ${a.l.toFixed(1)} giờ`])}
+function relink(T,id){const x=T.find(t=>t.id===id);return T.filter(t=>t.id!==id).map(t=>{const n={...t,deps:[...t.deps]};if(n.deps.includes(id)){n.deps=n.deps.filter(d=>d!==id);x.deps.forEach(d=>{if(!n.deps.includes(d)&&d!==n.id)n.deps.push(d)})}return n})}
+const toCsv=T=>"id,name,duration,roles,depends_on,complexity,on_air,start,effort\n"+T.map(t=>[t.id,t.name,t.duration,t.roles.join(";"),t.deps.join(";"),t.cx,t.onAir!=null?isoL(t.onAir):"",t.live?"event":t.now?"creation":"",t.effort].join(",")).join("\n");
+function conflicts(T,tl,cw){const X={};tl.sc.forEach(x=>X[x.id]=x);const grp=()=>{const o={};T.filter(t=>t.as&&!t.live).forEach(t=>{const x=X[t.id];(o[t.as+"|"+x.es+"|"+x.ef]??=[]).push(t)});return Object.values(o)},bad=()=>grp().filter(a=>a.length>1&&a.reduce((s,t)=>s+t.effort,0)>X[a[0].id].ef-X[a[0].id].es+EP);
+bad().forEach(a=>{if(!bad().some(b=>b.includes(a[0])))return;const t=a[a.length-1];if(!t.bk)return;const old=t.as;t.as=t.bk;if(bad().some(b=>b.includes(t)))t.as=old;else{t.bk=old;cw.push(`${t.id}: chuyển sang người dự phòng để tránh trùng giờ với ${a[0].id}`)}});
+bad().forEach(a=>{a.forEach(t=>{if(!t.flags.includes("TIME_CONFLICT"))t.flags.push("TIME_CONFLICT")});cw.push(`Trùng giờ: ${a.map(t=>t.id).join(", ")} cùng người làm, cùng khung giờ`)})}
+function build(T,M,S,locked={}){const d=checkDep(T);if(d.pr.length)return{err:d.pr};if(!(+new Date($("#ev").value)>S))return{err:["Thời điểm bắt đầu sự kiện phải sau lúc tạo sự kiện."]};if(!(+new Date($("#ee").value)>+new Date($("#ev").value)))return{err:["Kết thúc sự kiện phải sau lúc bắt đầu sự kiện."]};deadlines(T,S);assign(T,M,S,locked);const by=Object.fromEntries(T.map(t=>[t.id,t])),cw=[];T.forEach(c=>c.deps.forEach(p=>{const q=by[p];if(!q||c.live)return;const need=c.air-(c.cx>=3?2:1)*DAY-c.duration*H;if(q.air>need+1000)cw.push(`${p}: on-air muộn hơn lúc ${c.id} cần bắt đầu (${fmt(need)})`)}));const EV=+new Date($("#ev").value),EE=+new Date($("#ee").value);T.forEach(t=>{if(t.live&&EV+t.duration*H>EE+1000)cw.push(`${t.id}: kéo dài quá giờ kết thúc sự kiện (${fmt(EE)})`)});const tl=timeline(T,S);conflicts(T,tl,cw);return{T,M,S,cw,tl}}
+let P=null;
+function render(){const{T,M,tl,S}=P,nm=id=>id?(M.find(m=>m.id===id)||{}).name||id:"—";
+const k=Math.max(tl.end,1),step=[1,2,4,6,12,24,48,96,168].find(s=>k/s<=8)||168,ticks=[];for(let h=0;h<=k+1e-9;h+=step)ticks.push(h);
+const g=`<div class="gt"><div class="gl"><small>Giờ kể từ lúc bắt đầu</small></div><div class="gk" style="height:24px">${ticks.map(h=>`<b style="left:${h/k*100}%">${h}h</b>`).join("")}</div>`+[...tl.sc].sort((a,b)=>a.es-b.es||(a.id<b.id?-1:1)).map(x=>{const t=T.find(u=>u.id===x.id);return`<div class="gl"><b>${esc(t.id)}</b> ${esc(t.name)}<br><small>${fmt(S+x.es*H)} đến ${fmt(S+x.ef*H)}${x.crit?", đường găng":", được trễ "+x.slack+"h"}</small></div><div class="gk">${ticks.map(h=>`<u style="left:${h/k*100}%"></u>`).join("")}${x.crit?"":`<i class="s" style="left:${x.ef/k*100}%;width:${x.slack/k*100}%"></i>`}<i class="${x.crit?"c":""}" style="left:${x.es/k*100}%;width:${Math.max((x.ef-x.es)/k*100,1.2)}%"></i></div>`}).join("")+`</div>`;
+const rows=T.map(t=>`<tr><td>${esc(t.id)}</td><td>${esc(t.name)}</td><td>${fd(t.duration)}</td><td>${t.effort}h</td><td>${nm(t.as)}</td><td>${nm(t.bk)}</td><td>${fmt(t.air)}</td><td>${t.dl?fmt(t.dl):"—"}</td><td>${t.fb?fmt(t.fb):"—"}</td><td>${t.flags.map(f=>`<span class="fl">${f}</span>`).join("")}</td></tr>`).join("");
+$("#plan").innerHTML=box("ok",`Tổng thời gian tối thiểu: ${tl.end} giờ. Đường găng: ${tl.path.join(" → ")}`)+((tl.w.length||P.cw.length)?box("wn",[...tl.w,...P.cw].join("\n")):"")+
+`<h3>Timeline (thanh đặc màu = đường găng, nét đứt = thời gian được trễ)</h3>${g}<h3>Phân công và deadline</h3><div class="tw"><table><tr><th>ID</th><th>Task</th><th>Thời lượng</th><th>Giờ công</th><th>Chính</th><th>Dự phòng</th><th>On-air</th><th>Hạn nộp nháp</th><th>Feedback xong (cách on-air 8-10h)</th><th>Cờ</th></tr>${rows}</table></div>`+
+`<h3>Slack (giờ có thể trễ mà không ảnh hưởng cả kế hoạch)</h3><div class="tw"><table><tr>${tl.sc.map(x=>`<th>${x.id}</th>`).join("")}</tr><tr>${tl.sc.map(x=>`<td>${x.slack}</td>`).join("")}</tr></table></div>`;
+const opt=a=>a.map(x=>`<option value="${esc(x[0])}">${esc(x[1])}</option>`).join("");$("#del").innerHTML=opt(T.map(t=>[t.id,t.id+" "+t.name]));$("#wt").innerHTML=opt(T.map(t=>[t.id,t.id+" "+t.name]));$("#wm").innerHTML=opt([["","Giữ nguyên"],...M.map(m=>[m.id,m.name])]);
+const first=Math.min(...T.filter(t=>t.dl!=null).map(t=>t.dl));const d=new Date(isFinite(first)?first-10*H:S);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());$("#now").value=d.toISOString().slice(0,16);}
+function run(){try{const r=build(parseTasks($("#tk").value),parseMembers($("#mb").value),+new Date($("#st").value));if(r.err){$("#msg").innerHTML=box("er",r.err.join("\n"));return false}P=r;$("#msg").innerHTML=box("ok","Đã tính xong, xem timeline bên dưới.");render();return true}catch(e){$("#msg").innerHTML=box("er",e.message);return false}}
+$("#run").onclick=run;
+$("#al").onclick=()=>{if(!P&&!run())return;const a=alerts(P.T,+new Date($("#now").value));$("#alr").innerHTML=a.length?a.map(x=>box(x[0],x[1])).join(""):box("ok","Không có task nào quá hạn hoặc còn dưới 12 giờ.")};
+$("#delb").onclick=()=>{if(!P)return;const id=$("#del").value,n=relink(P.T,id);$("#tk").value=toCsv(n);const old=P.T.filter(t=>t.deps.includes(id)).map(t=>`${t.id} giờ phụ thuộc ${n.find(x=>x.id===t.id).deps.join(", ")||"không ai"}`);
+if(run())$("#delr").innerHTML=box("ok",`Đã xóa ${id}. Các task con được nối lại:\n${old.join("\n")||"Không có task con."}`)};
+$("#wb").onclick=()=>{if(!P)return;try{const T=parseTasks($("#tk").value),M=P.M,id=$("#wt").value,d=+$("#wd").value,m=$("#wm").value,t=T.find(x=>x.id===id),lk={};
+if(d>0)t.duration=d;if(m)lk[id]=m;const a=build(T,M,P.S,lk);if(a.err)return $("#wr").innerHTML=box("er",a.err.join("\n"));
+const nw=a.tl.w.filter(x=>!P.tl.w.includes(x)),fl=a.T.flatMap(x=>x.flags.map(f=>x.id+": "+f)).filter(x=>!P.T.flatMap(y=>y.flags.map(f=>y.id+": "+f)).includes(x));
+$("#wr").innerHTML=box("in",`Tổng thời gian: ${P.tl.end}h → ${a.tl.end}h (${a.tl.end-P.tl.end>=0?"+":""}${a.tl.end-P.tl.end}h)\nĐường găng mới: ${a.tl.path.join(" → ")}`)+(nw.length||fl.length?box("wn",[...nw,...fl].join("\n")):box("ok","Không phát sinh cảnh báo mới. Kế hoạch gốc không bị thay đổi."))}catch(e){$("#wr").innerHTML=box("er",e.message)}};
+$("#cyc").onclick=()=>{try{const T=parseTasks($("#tk").value);T[0].deps=["T2"];if(T[1])T[1].deps=["T1"];const d=checkDep(T);$("#cycr").innerHTML=d.pr.length?box("er","Hệ thống từ chối và báo lỗi:\n"+d.pr.join("\n")):box("ok","Không có vòng.")}catch(e){$("#cycr").innerHTML=box("er",e.message)}};
+run();
+</script>
+</body>
+</html>
