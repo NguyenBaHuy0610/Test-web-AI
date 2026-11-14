@@ -26,6 +26,11 @@ window.renderAppUser = function (user) {
     if (settingsName) settingsName.textContent = name;
     if (settingsRole) settingsRole.textContent = role;
     if (settingsAvatar) settingsAvatar.textContent = getUserInitials(name) || "?";
+
+    const wsElement = document.querySelector(".workspace-name");
+    if (wsElement && user.workspaceName) {
+        wsElement.textContent = String(user.workspaceName).toUpperCase();
+    }
 };
 
 let _appUserPromise = null;
@@ -57,7 +62,7 @@ window.loadAppUser = async function (forceRefresh = false) {
             let membership = null;
             const { data, error: membershipError } = await client
                 .from("team_members")
-                .select("member_id, account_role, members(member_label, department)")
+                .select("member_id, account_role, workspace_id, members(member_label, department)")
                 .eq("user_id", user.id)
                 .maybeSingle();
 
@@ -65,6 +70,24 @@ window.loadAppUser = async function (forceRefresh = false) {
                 console.error("Không thể tải thông tin thành viên:", membershipError);
             } else {
                 membership = data;
+            }
+
+            const workspaceId = membership?.workspace_id || null;
+            let workspaceName = "Không gian Multimedia";
+            if (workspaceId) {
+                try {
+                    const { data: wsData } = await client
+                        .from("workspaces")
+                        .select("workspace_id, workspace_name")
+                        .eq("workspace_id", workspaceId)
+                        .maybeSingle();
+                    if (wsData?.workspace_name) {
+                        workspaceName = wsData.workspace_name;
+                    }
+                } catch (e) {
+                    // Dự phòng nếu bảng workspaces chưa tạo RLS
+                    workspaceName = `Workspace ${workspaceId}`;
+                }
             }
 
             const name = user.user_metadata?.full_name ||
@@ -88,7 +111,9 @@ window.loadAppUser = async function (forceRefresh = false) {
                 isLeader: normalizedRole === "leader",
                 memberId: membership?.member_id || user.user_metadata?.member_id || user.app_metadata?.member_id || null,
                 memberLabel: membership?.members?.member_label || name,
-                department: membership?.members?.department || null
+                department: membership?.members?.department || null,
+                workspaceId,
+                workspaceName
             };
 
             window.appUser = userInfo;

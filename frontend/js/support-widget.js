@@ -221,10 +221,16 @@
     async function resolveOngoingEvent(user, client = window.supabaseClient) {
         if (!client) return null;
         try {
-            const { data: events, error: evErr } = await client
+            let query = client
                 .from("events")
-                .select("event_id, event_label, event_category, category_note, is_completed, first_on_air_date, last_on_air_date, n_tasks")
+                .select("event_id, event_label, event_category, category_note, is_completed, first_on_air_date, last_on_air_date, n_tasks, workspace_id")
                 .order("event_id", { ascending: true });
+
+            if (user?.workspaceId) {
+                query = query.eq("workspace_id", user.workspaceId);
+            }
+
+            const { data: events, error: evErr } = await query;
 
             if (evErr || !Array.isArray(events) || !events.length) return null;
 

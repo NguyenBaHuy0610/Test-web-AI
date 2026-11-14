@@ -180,8 +180,8 @@ signupForm.addEventListener("submit", async event => {
 
         signupFeedback.style.color = "#15803d";
         signupFeedback.textContent = data.session
-            ? "Tạo tài khoản thành công. Tài khoản cần được trưởng nhóm liên kết với thành viên trước khi dùng workspace."
-            : "Đã tạo tài khoản. Hãy kiểm tra email để xác nhận, sau đó liên hệ trưởng nhóm để được liên kết với workspace.";
+            ? "Tạo tài khoản thành công! Hệ thống đã tự động tạo không gian làm việc mới và gán bạn làm Trưởng nhóm (Leader). Hãy đăng nhập để bắt đầu."
+            : "Đã tạo tài khoản! Hệ thống đã tạo không gian làm việc mới cho bạn. Hãy kiểm tra email để xác nhận (nếu có yêu cầu) rồi đăng nhập để bắt đầu.";
         signupForm.reset();
     } catch (error) {
         console.error("Đăng ký thất bại:", error);

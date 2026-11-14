@@ -125,10 +125,17 @@
                     return this.eventsCache;
                 }
 
-                const { data, error } = await client
+                let query = client
                     .from("events")
-                    .select("event_id, event_label, event_category, category_note, n_tasks, first_on_air_date, last_on_air_date, is_completed")
+                    .select("event_id, event_label, event_category, category_note, n_tasks, first_on_air_date, last_on_air_date, is_completed, workspace_id")
                     .order("event_id", { ascending: true });
+
+                const wsId = window.appUser?.workspaceId;
+                if (wsId) {
+                    query = query.eq("workspace_id", wsId);
+                }
+
+                const { data, error } = await query;
 
                 if (error) {
                     console.error("[Groq] Lỗi tải danh sách sự kiện:", error);
@@ -235,6 +242,10 @@
                         .maybeSingle();
 
                     if (error || !data || data.is_completed === true) {
+                        return null;
+                    }
+                    const userWsId = window.appUser?.workspaceId;
+                    if (userWsId && data.workspace_id && data.workspace_id !== userWsId) {
                         return null;
                     }
                     event = data;

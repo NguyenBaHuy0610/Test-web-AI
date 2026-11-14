@@ -805,8 +805,10 @@ function initializeCreateEventModal() {
                 return match ? Math.max(highest, Number(match[1])) : highest;
             }, 0);
             const eventId = `EVT_${String(highestEventNumber + 1).padStart(2, "0")}`;
+            const wsId = state.currentUser?.workspaceId || window.appUser?.workspaceId || null;
             const eventPayload = {
                 event_id: eventId,
+                workspace_id: wsId,
                 event_label: eventName,
                 event_category: null,
                 category_note: description || null,

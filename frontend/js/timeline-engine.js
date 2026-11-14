@@ -553,8 +553,10 @@
             const lastOnAir = onAirDates.length ? onAirDates.sort().slice(-1)[0] : new Date(event.event_end || event.event_start).toISOString().split("T")[0];
 
             // 2. Chèn / cập nhật bảng events
+            const wsId = window.appUser?.workspaceId || null;
             const eventPayload = {
                 event_id: targetEventId,
+                workspace_id: wsId,
                 event_label: event.event_label || `Sự kiện ${targetEventId}`,
                 event_category: event.event_category || "event",
                 category_note: event.category_note || event.description || "Lập kế hoạch tự động bởi AI Assistant",
@@ -641,6 +643,7 @@
                     task_id: taskId,
                     task_no: currentNo,
                     event_id: targetEventId,
+                    workspace_id: wsId,
                     task_title: t.name,
                     task_type: taskType,
                     submission_label: `${i + 1}. ${t.name}`,
