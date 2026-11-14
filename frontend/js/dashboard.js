@@ -857,17 +857,15 @@ function initializeCreateEventModal() {
 
             console.log("[CreateEvent] Submitting payload:", eventPayload, "user:", user);
 
-            let { data: createdEvent, error: insertError } = await client
+            // Bước 1: Thực hiện chèn bản ghi vào bảng events mà KHÔNG đính kèm .select()
+            // Giải thích: Supabase mặc định nếu dùng .select() sẽ sinh ra mệnh đề RETURNING *.
+            // Trong PostgreSQL RLS, RETURNING * sẽ ép kiểm tra chính sách SELECT (can_read_event)
+            // ngay trên dòng uncommitted của statement hiện tại, dẫn tới vi phạm RLS SELECT.
+            let { error: insertError } = await client
                 .from("events")
-                .insert(eventPayload)
-                .select("*")
-                .single();
+                .insert(eventPayload);
 
-            if (insertError) {
-                console.error("[CreateEvent] Supabase insert error details:", insertError);
-            }
-
-            // Nếu DB cũ chưa có trigger sinh mã (báo thiếu event_id), sinh mã dự phòng
+            // Dự phòng: Nếu DB cũ chưa có trigger sinh mã (báo thiếu event_id), sinh mã dự phòng rồi thử lại
             if (insertError && String(insertError.message || "").toLowerCase().includes("event_id")) {
                 const { data: existingEvents } = await client
                     .from("events")
@@ -879,14 +877,29 @@ function initializeCreateEventModal() {
                 eventPayload.event_id = `EVT_${String(highestEventNumber + 1).padStart(2, "0")}`;
                 const retry = await client
                     .from("events")
-                    .insert(eventPayload)
-                    .select("*")
-                    .single();
-                createdEvent = retry.data;
+                    .insert(eventPayload);
                 insertError = retry.error;
             }
 
-            if (insertError) throw insertError;
+            if (insertError) {
+                console.error("[CreateEvent] Supabase insert error details:", insertError);
+                throw insertError;
+            }
+
+            // Bước 2: Sau khi INSERT thành công và được commit vào DB, ta SELECT lại bản ghi vừa tạo
+            const { data: createdEvents } = await client
+                .from("events")
+                .select("*")
+                .eq("workspace_id", wsId)
+                .order("event_id", { ascending: false })
+                .limit(1);
+
+            let createdEvent = createdEvents?.[0] || {
+                event_id: eventPayload.event_id || "EVT_01",
+                event_label: eventPayload.event_label,
+                workspace_id: wsId,
+                status: "draft"
+            };
 
             window.GroqService.eventsCache = null;
             window.GroqService.setActiveEventId(createdEvent.event_id);
