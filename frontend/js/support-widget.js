@@ -10,13 +10,17 @@
     const WIDGET_STATE_TABLE = "user_widget_state";
     const LOGS_TABLE = "task_change_logs";
     const DEFAULT_WIDGET_MODELS = [
-        "openai/gpt-oss-120b",
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
         "qwen/qwen3.8-27b"
     ];
 
     function getWidgetModels() {
-        const configuredModel = window.APP_CONFIG?.GROQ_SUPPORT_MODEL || "openai/gpt-oss-120b";
-        return Array.from(new Set([configuredModel, ...DEFAULT_WIDGET_MODELS]));
+        const configuredModel = window.APP_CONFIG?.GROQ_SUPPORT_MODEL;
+        const candidates = configuredModel && configuredModel !== "openai/gpt-oss-120b"
+            ? [configuredModel, ...DEFAULT_WIDGET_MODELS]
+            : DEFAULT_WIDGET_MODELS;
+        return Array.from(new Set(candidates));
     }
     const DEFAULT_FALLBACK_CONTACT = "0799605442";
     const LEADER_DEADLINE_ALERT_HOURS = 48;
@@ -43,13 +47,13 @@
     };
 
     const FEATURE_DOCS = [
-        "- Trang chủ (dashboard.html): Chọn/tạo sự kiện (+ Tạo sự kiện), hoàn tất sự kiện (Hoàn tất sự kiện), chat với Trợ lý AI chính để hỏi đáp sự kiện, tải lên tài liệu (.docx, .pdf, .xlsx, .csv, .txt, ảnh) bằng nút + hoặc kéo thả, lập Timeline & đường găng CPM rồi bấm Xác nhận & Lưu vào Supabase.",
-        "- Công việc của tôi (my-tasks.html): Xem các công việc được giao cho bản thân, tìm kiếm, lọc theo ban và tab trạng thái (Tất cả, Chưa bắt đầu, Đang thực hiện, Chờ duyệt, Đã hoàn thành), mở chi tiết công việc để cập nhật trạng thái/tiến độ (Lưu cập nhật).",
-        "- Danh sách công việc (task-list.html): Xem toàn bộ công việc của sự kiện, lọc theo ban/trạng thái, xem chi tiết phân công thành viên và cập nhật tiến độ phân công của mình.",
-        "- Lịch & Deadline (task-calendar.html): Xem hạn chót theo chế độ Tháng, Tuần, Gantt Chart, bật lọc Việc của tôi và xem danh sách Deadline sắp tới.",
-        "- Thành viên (members.html): Xem danh sách thành viên, ban/vai trò, số việc đang nhận và lịch rảnh hàng tuần; thêm hoặc cập nhật thành viên.",
-        "- Lịch sử (history.html): Tra cứu các sự kiện đã qua theo năm, tỷ lệ hoàn thành và chi tiết từng công việc.",
-        "- Cài đặt (setting.html): Cài đặt thông báo, đổi tên hiển thị, đổi mật khẩu và bấm Đăng xuất."
+        "- Trang chủ (dashboard.html): Chọn/tạo sự kiện (+ Tạo sự kiện), hoàn tất sự kiện, chat AI, tải tài liệu lập Timeline CPM.",
+        "- Công việc của tôi (my-tasks.html): Xem và cập nhật trạng thái/tiến độ công việc cá nhân.",
+        "- Danh sách công việc (task-list.html): Xem toàn bộ công việc theo sự kiện và ban.",
+        "- Lịch & Deadline (task-calendar.html): Xem hạn chót theo Tháng, Tuần, Gantt Chart.",
+        "- Thành viên (members.html): Xem danh sách thành viên, vai trò, số việc và lịch rảnh.",
+        "- Lịch sử (history.html): Tra cứu các sự kiện đã qua theo năm.",
+        "- Cài đặt (setting.html): Cài đặt thông báo, đổi tên hiển thị, mật khẩu, đăng xuất."
     ].join("\n");
 
     const TOOLS_SPEC = [
@@ -1210,11 +1214,11 @@ Lưu ý: Không lặp lại gợi ý người dùng vừa bấm ("${widgetState.
             { role: "system", content: buildSystemPrompt() }
         ];
 
-        widgetState.messages.slice(-8).forEach(msg => {
+        widgetState.messages.slice(-6).forEach(msg => {
             if (!msg?.content) return;
             apiMessages.push({
                 role: msg.role === "assistant" ? "assistant" : "user",
-                content: msg.content
+                content: String(msg.content).slice(0, 1000)
             });
         });
 
@@ -1461,9 +1465,13 @@ Lưu ý: Không lặp lại gợi ý người dùng vừa bấm ("${widgetState.
             renderMessages();
         } catch (err) {
             document.getElementById("swTypingIndicator")?.remove();
+            let userFriendlyMsg = err.message || "lỗi kết nối";
+            if (userFriendlyMsg.includes("Rate limit")) {
+                userFriendlyMsg = "Hệ thống AI đang tiếp nhận nhiều yêu cầu. Bạn vui lòng bấm 'Thử lại' sau vài giây nhé";
+            }
             widgetState.messages.push({
                 role: "assistant",
-                content: `Không thể phản hồi lúc này (${err.message || "lỗi kết nối"}). Nếu cần gấp, vui lòng liên hệ **${DEFAULT_FALLBACK_CONTACT}**.`,
+                content: `Không thể phản hồi lúc này (${userFriendlyMsg}). Nếu cần gấp, vui lòng liên hệ **${DEFAULT_FALLBACK_CONTACT}**.`,
                 suggestions: ["Thử lại", "Trang web này làm được gì?"]
             });
             await persistWidgetMessages();

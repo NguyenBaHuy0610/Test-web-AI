@@ -18,12 +18,9 @@
 
     // Danh sách model Groq theo thứ tự ưu tiên (ưu tiên các model khả dụng và phản hồi siêu nhanh)
     const MODELS = [
-        "qwen/qwen3.8-27b",
-        "openai/gpt-oss-120b",
-        "openai/gpt-oss-20b",
-        "allam-2-7b",
         "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant"
+        "llama-3.1-8b-instant",
+        "qwen/qwen3.8-27b"
     ];
 
     // Danh sách model Groq hỗ trợ nhận diện hình ảnh (Vision multimodal)
@@ -58,7 +55,7 @@
     class GroqService {
         constructor() {
             this.apiKey = localStorage.getItem(STORAGE_KEY) || DEFAULT_API_KEY;
-            this.currentModel = localStorage.getItem(WORKING_MODEL_KEY) || "qwen/qwen3.8-27b";
+            this.currentModel = localStorage.getItem(WORKING_MODEL_KEY) || "llama-3.3-70b-versatile";
             this.activeEventId = localStorage.getItem(ACTIVE_EVENT_KEY) || null;
             this.eventsCache = null;
         }
