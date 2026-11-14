@@ -855,11 +855,17 @@ function initializeCreateEventModal() {
                 is_completed: false
             };
 
+            console.log("[CreateEvent] Submitting payload:", eventPayload, "user:", user);
+
             let { data: createdEvent, error: insertError } = await client
                 .from("events")
                 .insert(eventPayload)
                 .select("*")
                 .single();
+
+            if (insertError) {
+                console.error("[CreateEvent] Supabase insert error details:", insertError);
+            }
 
             // Nếu DB cũ chưa có trigger sinh mã (báo thiếu event_id), sinh mã dự phòng
             if (insertError && String(insertError.message || "").toLowerCase().includes("event_id")) {
