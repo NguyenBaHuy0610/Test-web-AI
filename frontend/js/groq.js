@@ -275,8 +275,7 @@
                             assignment_state,
                             is_done,
                             members (
-                                member_label,
-                                department
+                                member_label
                             )
                         )
                     `)

@@ -524,7 +524,7 @@
                 created_at, updated_at,
                 task_assignments (
                     role, assignment_state, member_id, is_done, assigned_at,
-                    members ( member_label, department )
+                    members ( member_label )
                 )
             `);
 
@@ -543,7 +543,7 @@
                     on_air_date, on_air_time, status, post_done, is_cancelled, progress,
                     task_assignments (
                         role, assignment_state, member_id, is_done, assigned_at,
-                        members ( member_label, department )
+                        members ( member_label )
                     )
                 `);
             if (eventIdFilter && eventIdFilter !== "all") {

@@ -795,33 +795,91 @@ function initializeCreateEventModal() {
         DOM.createEventFeedback.classList.remove("is-error");
 
         try {
-            const { data: existingEvents, error: listError } = await client
-                .from("events")
-                .select("event_id");
-            if (listError) throw listError;
+            // 1. Luôn làm mới thông tin tài khoản để nhận diện đúng vai trò (Leader/Member) và Workspace
+            let user = await window.loadAppUser?.(true);
+            if (!user) user = state.currentUser;
 
-            const highestEventNumber = (existingEvents || []).reduce((highest, item) => {
-                const match = String(item.event_id || "").match(/(\d+)$/);
-                return match ? Math.max(highest, Number(match[1])) : highest;
-            }, 0);
-            const eventId = `EVT_${String(highestEventNumber + 1).padStart(2, "0")}`;
-            const wsId = state.currentUser?.workspaceId || window.appUser?.workspaceId || null;
+            if (!user || !user.id) {
+                DOM.createEventFeedback.textContent = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                DOM.createEventFeedback.classList.add("is-error");
+                return;
+            }
+
+            // 2. Kiểm tra quyền Leader theo chính sách bảo mật RLS (chỉ Leader mới được tạo sự kiện)
+            if (!user.isLeader) {
+                DOM.createEventFeedback.textContent = `Tài khoản "${user.name}" (${user.email || user.id}) có vai trò "${user.role || 'Thành viên'}". Theo quy định, chỉ Trưởng nhóm (Leader) mới có quyền tạo sự kiện mới.`;
+                DOM.createEventFeedback.classList.add("is-error");
+                return;
+            }
+
+            // 3. Đảm bảo workspaceId khớp chính xác với my_workspace_id() trong database
+            let wsId = user.workspaceId;
+            if (!wsId) {
+                const { data: tm } = await client
+                    .from("team_members")
+                    .select("workspace_id, account_role")
+                    .eq("user_id", user.id)
+                    .maybeSingle();
+                if (tm?.workspace_id) {
+                    wsId = tm.workspace_id;
+                    user.workspaceId = wsId;
+                    if (tm.account_role === "leader") user.isLeader = true;
+                }
+            }
+
+            if (!wsId) {
+                DOM.createEventFeedback.textContent = `Tài khoản (${user.email || user.id}) chưa được gán vào Không gian làm việc (Workspace). Vui lòng kiểm tra bảng team_members.`;
+                DOM.createEventFeedback.classList.add("is-error");
+                return;
+            }
+
+            // 4. Kiểm tra quy tắc nghiệp vụ: Mỗi workspace chỉ được có tối đa 1 sự kiện active
+            const { data: ongoingEvents } = await client
+                .from("events")
+                .select("event_id, event_label, status")
+                .eq("workspace_id", wsId)
+                .eq("status", "active");
+
+            if (ongoingEvents && ongoingEvents.length > 0) {
+                DOM.createEventFeedback.textContent = `Không thể tạo thêm sự kiện vì Workspace đang có sự kiện đang diễn ra: "${ongoingEvents[0].event_label}". Vui lòng hoàn tất sự kiện hiện tại trước.`;
+                DOM.createEventFeedback.classList.add("is-error");
+                return;
+            }
+
+            // 5. Chuẩn bị payload đúng chuẩn RLS: workspace_id phải khớp với my_workspace_id(), status là draft
             const eventPayload = {
-                event_id: eventId,
                 workspace_id: wsId,
                 event_label: eventName,
-                event_category: null,
                 category_note: description || null,
-                n_tasks: 0,
-                first_on_air_date: null,
-                last_on_air_date: null,
+                status: "draft",
                 is_completed: false
             };
-            const { data: createdEvent, error: insertError } = await client
+
+            let { data: createdEvent, error: insertError } = await client
                 .from("events")
                 .insert(eventPayload)
-                .select("event_id, event_label, event_category, category_note, n_tasks, first_on_air_date, last_on_air_date, is_completed")
+                .select("*")
                 .single();
+
+            // Nếu DB cũ chưa có trigger sinh mã (báo thiếu event_id), sinh mã dự phòng
+            if (insertError && String(insertError.message || "").toLowerCase().includes("event_id")) {
+                const { data: existingEvents } = await client
+                    .from("events")
+                    .select("event_id");
+                const highestEventNumber = (existingEvents || []).reduce((highest, item) => {
+                    const match = String(item.event_id || "").match(/(\d+)$/);
+                    return match ? Math.max(highest, Number(match[1])) : highest;
+                }, 0);
+                eventPayload.event_id = `EVT_${String(highestEventNumber + 1).padStart(2, "0")}`;
+                const retry = await client
+                    .from("events")
+                    .insert(eventPayload)
+                    .select("*")
+                    .single();
+                createdEvent = retry.data;
+                insertError = retry.error;
+            }
+
             if (insertError) throw insertError;
 
             window.GroqService.eventsCache = null;

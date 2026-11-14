@@ -60,16 +60,49 @@ window.loadAppUser = async function (forceRefresh = false) {
             const user = sessionData.session.user;
 
             let membership = null;
-            const { data, error: membershipError } = await client
+            // 1. Tải thông tin cốt lõi từ team_members (không phụ thuộc cột ngoại lai hay join nhúng)
+            let { data, error: membershipError } = await client
                 .from("team_members")
-                .select("member_id, account_role, workspace_id, members(member_label, department)")
+                .select("member_id, account_role, workspace_id")
                 .eq("user_id", user.id)
                 .maybeSingle();
 
             if (membershipError) {
                 console.error("Không thể tải thông tin thành viên:", membershipError);
-            } else {
+            } else if (data) {
                 membership = data;
+                // Nếu có member_id, thử lấy tên thành viên từ bảng members
+                if (data.member_id) {
+                    try {
+                        const { data: memberRecord } = await client
+                            .from("members")
+                            .select("member_label")
+                            .eq("member_id", data.member_id)
+                            .maybeSingle();
+                        if (memberRecord) {
+                            membership.members = memberRecord;
+                        }
+                    } catch (e) {
+                        console.warn("Không thể tải nhãn thành viên:", e);
+                    }
+                }
+            }
+
+            // Tự phục hồi workspace nếu user chưa có workspace_id
+            if (!membership?.workspace_id) {
+                try {
+                    const { data: healedWsId } = await client.rpc("ensure_my_workspace");
+                    if (healedWsId) {
+                        const { data: refetched } = await client
+                            .from("team_members")
+                            .select("member_id, account_role, workspace_id")
+                            .eq("user_id", user.id)
+                            .maybeSingle();
+                        if (refetched) membership = refetched;
+                    }
+                } catch (e) {
+                    // Không có RPC ensure_my_workspace hoặc lỗi thì bỏ qua
+                }
             }
 
             const workspaceId = membership?.workspace_id || null;

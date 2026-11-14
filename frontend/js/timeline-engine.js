@@ -553,10 +553,27 @@
             const lastOnAir = onAirDates.length ? onAirDates.sort().slice(-1)[0] : new Date(event.event_end || event.event_start).toISOString().split("T")[0];
 
             // 2. Chèn / cập nhật bảng events
-            const wsId = window.appUser?.workspaceId || null;
+            let wsId = window.appUser?.workspaceId || null;
+            if (!wsId && client) {
+                try {
+                    const authUser = (await client.auth.getSession())?.data?.session?.user;
+                    if (authUser) {
+                        const { data: tm } = await client
+                            .from("team_members")
+                            .select("workspace_id")
+                            .eq("user_id", authUser.id)
+                            .maybeSingle();
+                        if (tm?.workspace_id) {
+                            wsId = tm.workspace_id;
+                            if (window.appUser) window.appUser.workspaceId = wsId;
+                        }
+                    }
+                } catch(e) {}
+            }
             const eventPayload = {
                 event_id: targetEventId,
                 workspace_id: wsId,
+                status: "draft",
                 event_label: event.event_label || `Sự kiện ${targetEventId}`,
                 event_category: event.event_category || "event",
                 category_note: event.category_note || event.description || "Lập kế hoạch tự động bởi AI Assistant",
