@@ -447,7 +447,7 @@
     }
     else {
       dom.tbody.innerHTML = rows.map(task => {
-        const roles = [...new Set(task.assignments.map(a => a.role).filter(Boolean))];
+        const roles = [...new Set(task.assignments.map(a => normalizeFunctionGroup(a.role)).filter(Boolean))];
         const members = [...new Set(task.assignments.map(a => a.member_id).filter(Boolean))];
         const lateBy = overdueDays(task);
         return `
@@ -488,7 +488,7 @@
 
   function renderDetail(task) {
     const assignments = task.assignments || [];
-    const roles = [...new Set(assignments.map(a => a.role).filter(Boolean))];
+    const roles = [...new Set(assignments.map(a => normalizeFunctionGroup(a.role)).filter(Boolean))];
     const members = [...new Set(assignments.map(a => a.member_id).filter(Boolean))];
     const dependencies = taskDependencies(task);
     const dependenciesHTML = dependencies.length

@@ -78,7 +78,7 @@
                     properties: {
                         from_iso: {
                             type: "string",
-                            description: "Mốc thời gian bắt đầu (ISO-8601 hoặc YYYY-MM-DD HH:mm). Bắt buộc do người dùng chọn hoặc xác nhận."
+                            description: "Mốc thời gian bắt đầu (ISO-8601 hoặc YYYY-MM-DD HH:mm). Tùy chọn, nếu không có sẽ tự động dùng mốc 24h gần nhất."
                         },
                         event_id: {
                             type: "string",
@@ -86,10 +86,10 @@
                         },
                         role_filter: {
                             type: "string",
-                            description: "Tên ban/vai trò nếu người dùng muốn lọc riêng (ví dụ content_writer, designer...)."
+                            description: "Tên ban/vai trò nếu người dùng muốn lọc riêng (ví dụ Content, Design, Edit, Tech, Photo...)."
                         }
                     },
-                    required: ["from_iso"]
+                    required: []
                 }
             }
         },
@@ -655,14 +655,7 @@
         }
 
         if (name === "query_task_updates") {
-            const fromDate = parseFlexibleTimestamp(args.from_iso);
-            if (!fromDate) {
-                return {
-                    ok: false,
-                    needs_clarification: true,
-                    error: "Mốc thời gian không hợp lệ hoặc chưa được cung cấp. Hãy hỏi lại người dùng mốc thời gian cụ thể."
-                };
-            }
+            const fromDate = parseFlexibleTimestamp(args.from_iso) || new Date(Date.now() - 24 * 3600 * 1000);
 
             if (!widgetState.ongoingEvent) {
                 widgetState.ongoingEvent = await resolveOngoingEvent(user, client);

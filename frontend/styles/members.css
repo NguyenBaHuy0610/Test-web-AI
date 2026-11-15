@@ -827,6 +827,37 @@ button {
     flex: 1;
 }
 
+.table-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.table-action-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid #fee4e2;
+    background: #fef3f2;
+    color: #d92d20;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.table-action-delete:hover {
+    background: #fee4e2;
+    border-color: #fecdca;
+    color: #b42318;
+}
+
+.table-action-delete svg {
+    width: 15px;
+    height: 15px;
+}
+
 .delete-member-btn {
     min-width: 95px;
     height: 38px;

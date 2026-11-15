@@ -722,14 +722,26 @@ window.loadAppUser = async function () {
     }
 
     const { data: sessionData, error: sessionError } = await client.auth.getSession();
-    if (sessionError) throw sessionError;
-    if (!sessionData.session) {
+    if (sessionError) {
+        console.warn("Lỗi kiểm tra phiên làm việc:", sessionError);
+        return null;
+    }
+    if (!sessionData?.session) {
         window.location.replace("login.html");
         return null;
     }
 
-    const { data: { user }, error: authError } = await client.auth.getUser();
-    if (authError) throw authError;
+    let user = sessionData.session.user;
+    if (!user) {
+        try {
+            const { data, error: authError } = await client.auth.getUser();
+            if (!authError && data?.user) {
+                user = data.user;
+            }
+        } catch (e) {
+            console.warn("Lỗi xác thực getUser:", e);
+        }
+    }
     if (!user) {
         window.location.replace("login.html");
         return null;

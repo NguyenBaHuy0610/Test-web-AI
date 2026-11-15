@@ -108,6 +108,15 @@
                             </select>
                         </div>
 
+                        <div class="filter-field">
+                            <label for="taskSort">Sắp xếp theo</label>
+                            <select id="taskSort" name="sort">
+                                <option value="deadline_asc">Deadline gần nhất</option>
+                                <option value="deadline_desc">Deadline xa nhất</option>
+                                <option value="on_air_desc">Ngày lên sóng mới nhất</option>
+                            </select>
+                        </div>
+
                         <button type="button" id="resetTaskFilters" class="reset-filter-btn">
                             Xóa bộ lọc
                         </button>
@@ -213,34 +222,6 @@
                 <strong class="team-deadline-count" id="teamDeadlineCount">0</strong>
             </div>
             <div class="team-deadline-list" id="teamDeadlineList"></div>
-        </section>
-
-
-        <section class="task-filter-section">
-            <div class="filter-toolbar">
-                <div class="sort-container">
-
-                    <label for="taskSort">
-                        <i data-lucide="list-filter"></i>
-                    </label>
-
-                    <select id="taskSort" name="sort">
-                        <option value="deadline_asc">
-                            Deadline gần nhất
-                        </option>
-
-                        <option value="deadline_desc">
-                            Deadline xa nhất
-                        </option>
-
-                        <option value="on_air_desc">
-                            Ngày lên sóng mới nhất
-                        </option>
-                    </select>
-
-                </div>
-
-            </div>
         </section>
 
 

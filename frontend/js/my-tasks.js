@@ -56,6 +56,12 @@ function refreshIcons() {
 }
 
 function formatRoleLabel(role = "") {
+    const raw = String(role || "").trim().toLowerCase();
+    if (raw.includes("edit") || raw.includes("video")) return "Edit";
+    if (raw.includes("design")) return "Design";
+    if (raw.includes("content") || raw.includes("writer")) return "Content";
+    if (raw.includes("tech")) return "Tech";
+    if (raw.includes("photo")) return "Photo";
     return String(role)
         .replace(/[_-]+/g, " ")
         .replace(/\b\w/g, character => character.toUpperCase());
@@ -625,6 +631,26 @@ function applyFilters() {
                matchesStatus &&
                matchesOverdue &&
                matchesGroup;
+    });
+
+    const sortVal = document.getElementById("taskSort")?.value || "deadline_asc";
+    state.filteredTasks.sort((a, b) => {
+        if (sortVal === "deadline_asc") {
+            return (a.deadlineDate ? new Date(a.deadlineDate).getTime() : Infinity) -
+                   (b.deadlineDate ? new Date(b.deadlineDate).getTime() : Infinity);
+        }
+        if (sortVal === "deadline_desc") {
+            return (b.deadlineDate ? new Date(b.deadlineDate).getTime() : -Infinity) -
+                   (a.deadlineDate ? new Date(a.deadlineDate).getTime() : -Infinity);
+        }
+        if (sortVal === "title_asc") {
+            return (a.title || "").localeCompare(b.title || "");
+        }
+        if (sortVal === "priority_desc") {
+            const pMap = { high: 3, urgent: 3, medium: 2, normal: 2, low: 1 };
+            return (pMap[b.priority] || 0) - (pMap[a.priority] || 0);
+        }
+        return 0;
     });
 
     const totalPages = Math.max(
@@ -1402,11 +1428,18 @@ document.getElementById("groupFilter")
 
     });
 
+document.getElementById("taskSort")
+    ?.addEventListener("change", () => {
+        state.page = 1;
+        applyFilters();
+    });
+
 
 document.getElementById("resetTaskFilters")
 ?.addEventListener("click", () => {
     state.group = "";
-    document.getElementById("groupFilter").value = "";
+    if (document.getElementById("groupFilter")) document.getElementById("groupFilter").value = "";
+    if (document.getElementById("taskSort")) document.getElementById("taskSort").value = "deadline_asc";
     state.overdueOnly = false;
     state.status = "all";
     syncTaskFilterControls();

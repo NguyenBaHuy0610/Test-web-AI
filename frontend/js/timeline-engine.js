@@ -205,24 +205,27 @@
          */
         assignMembers(tasks, members) {
             const roleNormalization = {
-                content: "content_writer",
-                content_writer: "content_writer",
-                design: "designer",
-                designer: "designer",
-                photo: "photographer",
-                photographer: "photographer",
-                video: "editor",
-                editor: "editor",
-                tech: "technician",
-                technician: "technician"
+                content: "Content",
+                content_writer: "Content",
+                writer: "Content",
+                design: "Design",
+                designer: "Design",
+                photo: "Photo",
+                photographer: "Photo",
+                video: "Edit",
+                edit: "Edit",
+                editor: "Edit",
+                tech: "Tech",
+                technician: "Tech",
+                general: "General"
             };
 
             const memberLoads = new Map(members.map(m => [m.id, m.load || 0]));
 
             const isEligible = (m, t) => {
                 if (!t.roles_required || !t.roles_required.length) return true;
-                const required = t.roles_required.map(r => roleNormalization[r.toLowerCase()] || r.toLowerCase());
-                const mRoles = (m.roles || []).map(r => roleNormalization[r.toLowerCase()] || r.toLowerCase());
+                const required = t.roles_required.map(r => roleNormalization[String(r).trim().toLowerCase()] || String(r).trim());
+                const mRoles = (m.roles || []).map(r => roleNormalization[String(r).trim().toLowerCase()] || String(r).trim());
                 return required.some(r => mRoles.includes(r));
             };
 
@@ -509,10 +512,19 @@
                 const deadlineDate = deadlineIso ? deadlineIso.split("T")[0] : onAirDate;
                 const deadlineTime = deadlineIso ? deadlineIso.split("T")[1].slice(0, 8) : onAirTime;
 
-                const roleName = (t.roles_required && t.roles_required[0]) || "general";
+                const roleMap = {
+                    content: "Content", content_writer: "Content", writer: "Content",
+                    design: "Design", designer: "Design",
+                    photo: "Photo", photographer: "Photo",
+                    video: "Edit", edit: "Edit", editor: "Edit",
+                    tech: "Tech", technician: "Tech"
+                };
+                const rawRole = (t.roles_required && t.roles_required[0]) || "General";
+                const roleName = roleMap[String(rawRole).trim().toLowerCase()] || String(rawRole).trim();
                 let taskType = "Product";
-                if (roleName.includes("content")) taskType = "OnPage";
-                else if (roleName.includes("photo") || roleName.includes("video") || roleName.includes("editor")) taskType = "Media";
+                const lowerRole = roleName.toLowerCase();
+                if (lowerRole.includes("content")) taskType = "OnPage";
+                else if (lowerRole.includes("photo") || lowerRole.includes("video") || lowerRole.includes("edit")) taskType = "Media";
 
                 taskInserts.push({
                     task_id: taskId,
@@ -534,15 +546,13 @@
                     progress: 0
                 });
 
-                if (t.assignee) {
-                    assignmentInserts.push({
-                        task_id: taskId,
-                        role: roleName,
-                        member_id: t.assignee,
-                        assignment_state: "assigned",
-                        is_done: false
-                    });
-                }
+                assignmentInserts.push({
+                    task_id: taskId,
+                    role: roleName,
+                    member_id: t.assignee || null,
+                    assignment_state: t.assignee ? "assigned" : "unassigned",
+                    is_done: false
+                });
             });
 
             const { error: tasksError } = await client.from("tasks").insert(taskInserts);

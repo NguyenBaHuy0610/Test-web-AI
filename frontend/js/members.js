@@ -481,6 +481,14 @@ function canUpdateMember(memberId) {
             String(currentAccountMemberId) === String(memberId));
 }
 
+function canRemoveMemberCheck(member) {
+    if (!member) return false;
+    if (!currentAccountIsTeamLeader) return false;
+    if (isTeamLeaderRole(member.role)) return false;
+    if (currentAccountMemberId != null && String(member.id) === String(currentAccountMemberId)) return false;
+    return true;
+}
+
 
 /* =====================================================
    6. RENDER MEMBER TABLE
@@ -567,15 +575,28 @@ function renderMembers() {
             </td>
 
             <td>
-                <button
-                    type="button"
-                    class="member-action-btn"
-                    data-action="detail"
-                    data-id="${escapeHTML(member.id)}"
-                    title="Xem chi tiết"
-                >
-                    <i data-lucide="ellipsis"></i>
-                </button>
+                <div class="table-actions">
+                    <button
+                        type="button"
+                        class="member-action-btn"
+                        data-action="detail"
+                        data-id="${escapeHTML(member.id)}"
+                        title="Xem chi tiết"
+                    >
+                        <i data-lucide="ellipsis"></i>
+                    </button>
+                    ${canRemoveMemberCheck(member) ? `
+                        <button
+                            type="button"
+                            class="table-action-delete"
+                            data-action="remove-member"
+                            data-id="${escapeHTML(member.id)}"
+                            title="Xóa thành viên khỏi workspace"
+                        >
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    ` : ""}
+                </div>
             </td>
 
         `;
@@ -782,10 +803,7 @@ function renderMemberDetail(member) {
     );
     const availability = renderAvailabilitySummary(member.availability || []);
     const canEditMember = canUpdateMember(member.id);
-    const canRemoveMember = workspaceMemberRemovalReady &&
-        currentUserCanManageWorkspace &&
-        !isTeamLeaderRole(member.role) &&
-        String(member.id) !== String(currentAccountMemberId);
+    const canRemoveMember = canRemoveMemberCheck(member);
 
     DOM.detailContent.innerHTML = `
 
@@ -1103,6 +1121,16 @@ function openUpdateMemberModal(memberId) {
 
     // Điền thông tin vào form dựa trên name của input.
     fillForm(DOM.updateForm, member);
+    const nameInput = DOM.updateForm.querySelector('[name="memberName"]');
+    if (nameInput) {
+        nameInput.value = member.name || member.member_label || "";
+    }
+    const modalRemoveBtn = document.getElementById("modalRemoveMember");
+    if (modalRemoveBtn) {
+        const canRemove = canRemoveMemberCheck(member);
+        modalRemoveBtn.style.display = canRemove ? "inline-block" : "none";
+        modalRemoveBtn.dataset.id = member.id;
+    }
     initializeAvailability(member.availability || {});
     showAvailabilityMessage("");
 
@@ -1315,7 +1343,27 @@ document.addEventListener("click", event => {
             }
         });
         availabilityByDay[day] = ranges;
-        renderAvailabilitySlots();
+
+        // Cập nhật giao diện trực tiếp tại nút bấm mà không re-render innerHTML để giữ nguyên vị trí cuộn
+        const isNowSelected = selectedHours.has(hour);
+        hourButton.classList.toggle("is-selected", isNowSelected);
+        hourButton.setAttribute("aria-pressed", String(isNowSelected));
+
+        const hidden = document.getElementById("availabilityValue");
+        if (hidden) {
+            const selectedDays = Object.keys(availabilityByDay)
+                .filter(d => Object.hasOwn(AVAILABILITY_DAY_NAMES, d))
+                .sort((a, b) => Number(a) - Number(b));
+            const normalized = Object.fromEntries(
+                selectedDays.map(d => [d, availabilityByDay[d] || []])
+            );
+            hidden.value = JSON.stringify(normalized);
+        }
+
+        const weekdayBtn = document.querySelector(`.weekday-list [data-availability-day="${day}"]`);
+        if (weekdayBtn) {
+            weekdayBtn.classList.toggle("has-hours", ranges.length > 0);
+        }
     }
 });
 
@@ -1471,6 +1519,18 @@ document.addEventListener("click", event => {
         removeWorkspaceMember(removeMemberButton.dataset.id, removeMemberButton);
     }
 
+    const modalRemoveMemberBtn = event.target.closest("#modalRemoveMember");
+    if (modalRemoveMemberBtn) {
+        removeWorkspaceMember(modalRemoveMemberBtn.dataset.id, modalRemoveMemberBtn);
+    }
+
+    const tableDeleteBtn = event.target.closest('[data-action="remove-member"]');
+    if (tableDeleteBtn) {
+        event.stopPropagation();
+        removeWorkspaceMember(tableDeleteBtn.dataset.id, tableDeleteBtn);
+        return;
+    }
+
 
     // Đóng modal
     const closeButton = event.target.closest(
@@ -1503,7 +1563,7 @@ async function removeWorkspaceMember(memberId, button) {
         window.alert("Không tìm thấy thành viên cần xóa.");
         return;
     }
-    if (!currentUserCanManageWorkspace) {
+    if (!currentAccountIsTeamLeader && !currentUserCanManageWorkspace) {
         window.alert("Chỉ trưởng nhóm mới có thể xóa thành viên khác khỏi workspace.");
         return;
     }
@@ -1526,6 +1586,7 @@ async function removeWorkspaceMember(memberId, button) {
         if (error) throw error;
 
         DOM.detailPanel.hidden = true;
+        closeUpdateMemberModal();
         currentMemberId = null;
         await loadMembers();
         window.alert(`${member.name || "Thành viên"} đã được xóa khỏi workspace.`);
@@ -1823,8 +1884,9 @@ function fillForm(form, data) {
             Array.from(field).forEach(input => {
 
                 if (input.type === "checkbox") {
+                    const normalizedInput = normalizeMemberGroup(input.value).toLowerCase();
                     input.checked = Array.isArray(value)
-                        ? value.includes(input.value)
+                        ? value.some(v => normalizeMemberGroup(v).toLowerCase() === normalizedInput)
                         : false;
                 }
 
