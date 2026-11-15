@@ -267,7 +267,8 @@ signupForm.addEventListener("submit", async event => {
             options: {
                 data: {
                     full_name: fullName,
-                    signup_source: "self_signup"
+                    signup_source: "self_signup",
+                    role: "leader"
                 }
             }
         });
@@ -276,9 +277,14 @@ signupForm.addEventListener("submit", async event => {
 
         signupFeedback.style.color = "#15803d";
         signupFeedback.textContent = data.session
-            ? "Tạo tài khoản thành công. Tài khoản cần được trưởng nhóm liên kết với thành viên trước khi dùng workspace."
-            : "Đã tạo tài khoản. Hãy kiểm tra email để xác nhận, sau đó liên hệ trưởng nhóm để được liên kết với workspace.";
+            ? "Tạo tài khoản thành công! Bạn là Trưởng nhóm của không gian làm việc mới. Đang chuyển hướng vào bảng điều khiển..."
+            : "Tạo tài khoản thành công! Bạn là Trưởng nhóm của không gian làm việc mới. Vui lòng kiểm tra email để xác nhận và đăng nhập.";
         signupForm.reset();
+        if (data.session) {
+            setTimeout(() => {
+                window.location.href = "dashboard.html";
+            }, 1000);
+        }
     } catch (error) {
         console.error("Đăng ký thất bại:", error);
         signupFeedback.style.color = "#dc2626";

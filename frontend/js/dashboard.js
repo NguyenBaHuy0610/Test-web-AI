@@ -851,6 +851,20 @@ function initializeCreateEventModal() {
             }
 
             if (!wsId) {
+                try {
+                    const { data: createdWsId } = await client.rpc("ensure_my_workspace");
+                    if (createdWsId) {
+                        wsId = createdWsId;
+                        user.workspaceId = wsId;
+                        user.isLeader = true;
+                        user.role = "Trưởng nhóm";
+                    }
+                } catch (e) {
+                    console.warn("Lỗi tự cấp workspace:", e);
+                }
+            }
+
+            if (!wsId) {
                 DOM.createEventFeedback.textContent = `Tài khoản (${user.email || user.id}) chưa được gán vào Không gian làm việc (Workspace). Vui lòng kiểm tra bảng team_members.`;
                 DOM.createEventFeedback.classList.add("is-error");
                 return;

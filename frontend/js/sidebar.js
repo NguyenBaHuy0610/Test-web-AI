@@ -811,11 +811,30 @@ window.loadAppUser = async function () {
     }
 
     let membership = null;
-    const { data, error: membershipError } = await client
+    let { data, error: membershipError } = await client
         .from("team_members")
         .select("member_id, account_role, workspace_id, members(member_label)")
         .eq("user_id", user.id)
         .maybeSingle();
+
+    if (!data && !membershipError) {
+        // Tự động gọi RPC ensure_my_workspace để cấp workspace và vai trò Leader cho tài khoản tự đăng ký
+        try {
+            const { data: wsId, error: rpcError } = await client.rpc("ensure_my_workspace");
+            if (!rpcError && wsId) {
+                const retry = await client
+                    .from("team_members")
+                    .select("member_id, account_role, workspace_id, members(member_label)")
+                    .eq("user_id", user.id)
+                    .maybeSingle();
+                if (retry.data) {
+                    data = retry.data;
+                }
+            }
+        } catch (e) {
+            console.warn("Lỗi gọi ensure_my_workspace:", e);
+        }
+    }
 
     if (membershipError) {
         console.error("Không thể tải thông tin thành viên:", membershipError);
@@ -828,22 +847,21 @@ window.loadAppUser = async function () {
         user.user_metadata?.name ||
         user.email?.split("@")[0] ||
         "Thành viên";
-    const accountRole = membership?.account_role || user.app_metadata?.role || "";
+    const accountRole = membership?.account_role || user.app_metadata?.role || "leader";
     const normalizedRole = String(accountRole).trim().toLowerCase();
     const roleLabels = {
         leader: "Trưởng nhóm",
         member: "Thành viên"
     };
-    const isLeader = normalizedRole === "leader" || user.app_metadata?.role === "leader";
+    const isLeader = normalizedRole === "leader" || user.app_metadata?.role === "leader" || (!membership && true);
     const userInfo = {
         id: user.id,
         memberId: membership?.member_id || null,
         workspaceId: membership?.workspace_id || null,
         email: user.email || "",
         name,
-        role: roleLabels[normalizedRole] ||
-            (accountRole ? String(accountRole) : membershipError ? "Không tải được vai trò" : "Chưa gán vai trò"),
-        accountRole: normalizedRole || "member",
+        role: roleLabels[normalizedRole] || (accountRole ? String(accountRole) : "Trưởng nhóm"),
+        accountRole: normalizedRole || "leader",
         isLeader
     };
 
@@ -874,6 +892,16 @@ window.ensurePersonalWorkspace = function (user) {
             if (membershipError) throw membershipError;
             memberId = membership?.member_id || null;
             workspaceId = membership?.workspace_id || null;
+        }
+        if (!workspaceId) {
+            try {
+                const { data: ensuredWsId } = await client.rpc("ensure_my_workspace");
+                if (ensuredWsId) {
+                    workspaceId = ensuredWsId;
+                }
+            } catch (rpcErr) {
+                console.warn("RPC ensure_my_workspace:", rpcErr);
+            }
         }
         if (workspaceId) {
             const { data: workspace, error: workspaceError } = await client
