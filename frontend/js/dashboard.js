@@ -828,7 +828,8 @@ function initializeCreateEventModal() {
             }
 
             // 2. Kiểm tra quyền Leader theo chính sách bảo mật RLS (chỉ Leader mới được tạo sự kiện)
-            if (!user.isLeader) {
+            const isLeader = Boolean(user.isLeader || user.role === "Trưởng nhóm" || String(user.accountRole || "").toLowerCase() === "leader");
+            if (!isLeader) {
                 DOM.createEventFeedback.textContent = `Tài khoản "${user.name}" (${user.email || user.id}) có vai trò "${user.role || 'Thành viên'}". Theo quy định, chỉ Trưởng nhóm (Leader) mới có quyền tạo sự kiện mới.`;
                 DOM.createEventFeedback.classList.add("is-error");
                 return;

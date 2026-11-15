@@ -455,15 +455,15 @@
 .notification-item {
     width: 100%;
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
+    align-items: center;
+    gap: 8px;
     padding: 10px;
     border: 0;
     border-radius: 8px;
     background: #fff;
     color: #252B45;
     text-align: left;
-    cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease;
 }
 
 .notification-item:hover {
@@ -472,6 +472,62 @@
 
 .notification-item.is-unread {
     background: #F2F4FF;
+}
+
+.notification-item:not(.is-unread) {
+    opacity: 0.72;
+}
+
+.notification-item:not(.is-unread):hover {
+    opacity: 1;
+}
+
+.notification-item-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    padding: 0;
+    text-align: left;
+}
+
+.notification-check-btn {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 50%;
+    background: #ffffff;
+    color: transparent;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.2s ease;
+}
+
+.notification-check-btn:hover {
+    border-color: #5266D5;
+    background: #EEF0FF;
+    color: #5266D5;
+}
+
+.notification-item:not(.is-unread) .notification-check-btn {
+    border-color: #10b981;
+    background: #10b981;
+    color: #ffffff;
+    cursor: default;
+}
+
+.notification-check-btn svg {
+    width: 12px;
+    height: 12px;
+    stroke-width: 2.5;
 }
 
 .notification-item-icon {

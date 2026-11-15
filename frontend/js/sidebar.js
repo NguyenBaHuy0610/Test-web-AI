@@ -106,11 +106,16 @@ function renderAppNotificationCenter(notifications, container, loadError = "") {
     }
 
     notifications.forEach(notification => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = `notification-item${notification.is_read ? "" : " is-unread"}`;
-        button.dataset.notificationId = notification.notification_id;
-        if (notification.task_id) button.dataset.taskId = notification.task_id;
+        const item = document.createElement("div");
+        item.className = `notification-item${notification.is_read ? "" : " is-unread"}`;
+        item.dataset.notificationId = notification.notification_id;
+        if (notification.task_id) item.dataset.taskId = notification.task_id;
+
+        const main = document.createElement("div");
+        main.className = "notification-item-main";
+        main.tabIndex = 0;
+        main.setAttribute("role", "button");
+        main.setAttribute("aria-label", `Xem chi tiết: ${notification.title}`);
 
         const icon = document.createElement("span");
         icon.className = "notification-item-icon";
@@ -136,16 +141,22 @@ function renderAppNotificationCenter(notifications, container, loadError = "") {
             minute: "2-digit"
         }).format(new Date(notification.created_at));
         content.append(title, message, date);
-        button.appendChild(icon);
-        button.appendChild(content);
+        main.appendChild(icon);
+        main.appendChild(content);
 
-        if (!notification.is_read) {
-            const dot = document.createElement("span");
-            dot.className = "notification-item-unread-dot";
-            dot.setAttribute("aria-label", "Chưa đọc");
-            button.appendChild(dot);
-        }
-        list.appendChild(button);
+        // Nút / Ô tròn đánh dấu đã đọc
+        const checkBtn = document.createElement("button");
+        checkBtn.type = "button";
+        checkBtn.className = "notification-check-btn";
+        checkBtn.title = notification.is_read ? "Đã đọc" : "Đánh dấu đã đọc";
+        checkBtn.setAttribute("aria-label", notification.is_read ? "Đã đọc" : "Đánh dấu đã đọc");
+        const checkIcon = document.createElement("i");
+        checkIcon.setAttribute("data-lucide", "check");
+        checkBtn.appendChild(checkIcon);
+
+        item.appendChild(main);
+        item.appendChild(checkBtn);
+        list.appendChild(item);
     });
 
     if (loadError) {
@@ -269,26 +280,31 @@ async function initializeAppNotificationCenter(user, container) {
         renderAppNotificationCenter(notifications, container, "");
 
         try {
-            const { error } = await client
+            // Gọi RPC SECURITY DEFINER để chắc chắn cập nhật thành công trên Supabase
+            try {
+                await client.rpc("mark_all_notifications_as_read");
+            } catch (rpcErr) {
+                console.warn("RPC mark_all_notifications_as_read fallback:", rpcErr);
+            }
+
+            await client
                 .from("notifications")
                 .update({ is_read: true, read_at: new Date().toISOString() })
                 .eq("user_id", userId)
                 .eq("is_read", false);
 
-            if (error) {
-                await client.rpc("mark_all_notifications_as_read");
-            }
             await loadNotifications();
             loadError = "";
             renderAppNotificationCenter(notifications, container, "");
         } catch (error) {
             console.error("Không thể cập nhật trạng thái thông báo:", error);
-            loadError = "Không thể lưu trạng thái đã đọc. Kiểm tra quyền UPDATE của RLS.";
+            loadError = "Không thể lưu trạng thái đã đọc.";
             renderAppNotificationCenter(notifications, container, loadError);
         } finally {
             markAllButton.disabled = !notifications.some(notification => !notification.is_read);
         }
     });
+
     list.addEventListener("click", async event => {
         if (!(event.target instanceof Element)) return;
         const item = event.target.closest("[data-notification-id]");
@@ -298,6 +314,40 @@ async function initializeAppNotificationCenter(user, container) {
         );
         if (!notification) return;
 
+        // Nếu người dùng tích vào ô tròn "Đánh dấu đã đọc"
+        const checkBtn = event.target.closest(".notification-check-btn");
+        if (checkBtn) {
+            event.stopPropagation();
+            if (notification.is_read) return;
+
+            notification.is_read = true;
+            notification.read_at = new Date().toISOString();
+            renderAppNotificationCenter(notifications, container, "");
+
+            try {
+                try {
+                    await client.rpc("mark_notification_as_read", {
+                        p_notification_id: notification.notification_id
+                    });
+                } catch (rpcErr) {
+                    console.warn("RPC mark_notification_as_read fallback:", rpcErr);
+                }
+
+                await client
+                    .from("notifications")
+                    .update({ is_read: true, read_at: new Date().toISOString() })
+                    .eq("notification_id", notification.notification_id)
+                    .eq("user_id", userId);
+
+                await loadNotifications();
+                renderAppNotificationCenter(notifications, container, "");
+            } catch (error) {
+                console.error("Không thể lưu trạng thái đã đọc:", error);
+            }
+            return;
+        }
+
+        // Bấm vào thân thông báo -> Mở modal chi tiết và tự động đánh dấu đã đọc
         openDetail(notification);
 
         if (!notification.is_read) {
@@ -306,22 +356,35 @@ async function initializeAppNotificationCenter(user, container) {
             renderAppNotificationCenter(notifications, container, "");
 
             try {
-                const { error } = await client
+                try {
+                    await client.rpc("mark_notification_as_read", {
+                        p_notification_id: notification.notification_id
+                    });
+                } catch (rpcErr) {
+                    console.warn("RPC mark_notification_as_read fallback:", rpcErr);
+                }
+
+                await client
                     .from("notifications")
                     .update({ is_read: true, read_at: new Date().toISOString() })
                     .eq("notification_id", notification.notification_id)
                     .eq("user_id", userId);
 
-                if (error) {
-                    await client.rpc("mark_notification_as_read", {
-                        p_notification_id: notification.notification_id
-                    });
-                }
                 await loadNotifications();
                 loadError = "";
                 renderAppNotificationCenter(notifications, container, "");
             } catch (error) {
                 console.error("Không thể lưu trạng thái đã đọc:", error);
+            }
+        }
+    });
+
+    list.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+            const main = event.target.closest(".notification-item-main");
+            if (main) {
+                event.preventDefault();
+                main.click();
             }
         }
     });
@@ -750,7 +813,7 @@ window.loadAppUser = async function () {
     let membership = null;
     const { data, error: membershipError } = await client
         .from("team_members")
-        .select("member_id, account_role, members(member_label)")
+        .select("member_id, account_role, workspace_id, members(member_label)")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -771,13 +834,17 @@ window.loadAppUser = async function () {
         leader: "Trưởng nhóm",
         member: "Thành viên"
     };
+    const isLeader = normalizedRole === "leader" || user.app_metadata?.role === "leader";
     const userInfo = {
         id: user.id,
         memberId: membership?.member_id || null,
+        workspaceId: membership?.workspace_id || null,
         email: user.email || "",
         name,
         role: roleLabels[normalizedRole] ||
-            (accountRole ? String(accountRole) : membershipError ? "Không tải được vai trò" : "Chưa gán vai trò")
+            (accountRole ? String(accountRole) : membershipError ? "Không tải được vai trò" : "Chưa gán vai trò"),
+        accountRole: normalizedRole || "member",
+        isLeader
     };
 
     window.appUser = userInfo;
