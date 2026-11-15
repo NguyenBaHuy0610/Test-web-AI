@@ -317,6 +317,20 @@
                 `}\n` +
                 `\`\`\`\n` +
                 `Hệ thống website sẽ tự động đọc khối dữ liệu này và kích hoạt thuật toán đường găng CPM, phân công thành viên và hiển thị nút Lưu vào Supabase cho người dùng.\n\n` +
+                `QUY TẮC ĐÁNH SỐ THỨ TỰ TASK VÀ CHÈN CÔNG VIỆC VÀO GIỮA (BẮT BUỘC TUÂN THỦ 100%):\n` +
+                `1. SỐ THỨ TỰ LUÔN LÀ SỐ NGUYÊN TĂNG DẦN LIÊN TỤC: Các công việc trong kế hoạch PHẢI LUÔN được đánh số theo số nguyên dương liên tục: 1, 2, 3, 4, 5... Trong JSON timeline_data, mã id PHẢI LUÔN là "T1", "T2", "T3", "T4"... tương ứng với số thứ tự.\n` +
+                `2. TUYỆT ĐỐI CẤM SỐ THỨ TỰ THẬP PHÂN HAY NHÁNH CON: KHÔNG ĐƯỢC dùng bất kỳ số thập phân hay nhánh con nào như 1.1, 1.2, 2.1, T1.1, T1.2, Task 1.1... trong cả lời nói lẫn dữ liệu JSON.\n` +
+                `3. KHI NGƯỜI DÙNG YÊU CẦU THÊM/CHÈN MỘT CÔNG VIỆC MỚI VÀO GIỮA KẾ HOẠCH (ví dụ: "thêm một task vào giữa task 1 và task 2", hoặc "chèn task kiểm duyệt sau task 1"):\n` +
+                `   - Vị trí chèn mới sẽ nhận số thứ tự ngay tại vị trí đó (ví dụ chèn vào giữa task 1 và task 2 cũ -> task mới trở thành "Task 2" với id "T2").\n` +
+                `   - TOÀN BỘ CÁC TASK PHÍA SAU PHẢI TỰ ĐỘNG TỊNH TIẾN SỐ THỨ TỰ TĂNG DẦN: Task 2 cũ trở thành "Task 3" (id "T3"), Task 3 cũ trở thành "Task 4" (id "T4"), và tiếp tục tịnh tiến cho tất cả các task sau đó.\n` +
+                `   - CẬP NHẬT LẠI MẢNG "depends_on" TƯƠNG ỨNG:\n` +
+                `     * Tự động tịnh tiến các mã ID phụ thuộc cũ: Bất kỳ task nào trước đó phụ thuộc vào Task 2 cũ (["T2"]) thì nay PHẢI chuyển thành phụ thuộc vào Task 3 mới (["T3"]).\n` +
+                `     * Task mới chèn vào ("T2") cần được phân tích phụ thuộc logic phù hợp (ví dụ: phụ thuộc vào ["T1"], và nếu task 3 cần task 2 hoàn thành trước thì task 3 có depends_on chứa ["T2"]).\n` +
+                `   - TRÌNH BÀY TRONG TIN NHẮN: Khi giải thích hoặc liệt kê danh sách sau khi chèn, luôn dùng số nguyên tăng dần liên tục:\n` +
+                `     * Task 1: [Tên task 1]\n` +
+                `     * Task 2 (mới): [Tên task mới được chèn]\n` +
+                `     * Task 3: [Tên task 2 cũ đã tịnh tiến số thứ tự]\n` +
+                `     * Task 4: [Tên task 3 cũ đã tịnh tiến số thứ tự]...\n\n` +
                 `Trả lời bằng tiếng Việt, thân thiện, chuyên nghiệp.\n\n` +
                 `${contextText}`;
 

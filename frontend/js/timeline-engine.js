@@ -374,20 +374,90 @@
             const eventStart = new Date(eventData.event_start || (Date.now() + 7 * 86400000));
             const eventEnd = new Date(eventData.event_end || (eventStart.getTime() + 12 * 3600000));
 
-            // Chuẩn hóa danh sách task
-            const tasks = rawTasks.map((t, idx) => ({
-                id: t.id || `T_${idx + 1}`,
-                name: t.name || t.task_title || `Công việc ${idx + 1}`,
-                duration: Number(t.duration) || (t.duration?.endsWith?.("d") ? parseFloat(t.duration) * 24 : 4),
-                effort: t.effort ? Number(t.effort) : null,
-                roles_required: Array.isArray(t.roles) ? t.roles : (t.roles ? String(t.roles).split(/[;,]/).map(s => s.trim()) : []),
-                depends_on: Array.isArray(t.depends_on) ? t.depends_on : (t.depends_on ? String(t.depends_on).split(/[;,]/).map(s => s.trim()) : []),
-                complexity: Number(t.complexity) || 2,
-                start: t.start || (t.is_live ? "event" : ""),
-                is_live: Boolean(t.is_live || t.start === "event"),
-                on_air: t.on_air ? new Date(t.on_air) : null,
-                flags: []
-            }));
+            // 0. Chuẩn hóa và tự động đánh số lại ID theo thứ tự nguyên liên tục 1, 2, 3, 4 (T1, T2, T3...)
+            // Loại bỏ hoàn toàn số thập phân như 1.1, 1.2, T1.1, T1.2...
+            // Tịnh tiến các ID cũ và đồng bộ lại các tham chiếu trong mảng depends_on.
+            const idTranslationMap = new Map();
+            const normalizedTasks = rawTasks.map((t, idx) => {
+                const targetId = `T${idx + 1}`;
+                const rawId = t.id != null ? String(t.id).trim() : "";
+                if (rawId) {
+                    idTranslationMap.set(rawId, targetId);
+                    idTranslationMap.set(rawId.toLowerCase(), targetId);
+                    const strippedT = rawId.replace(/^[Tt]/, "");
+                    if (strippedT) {
+                        idTranslationMap.set(strippedT, targetId);
+                    }
+                    const strippedTask = rawId.replace(/^[Tt]ask\s*/i, "");
+                    if (strippedTask) {
+                        idTranslationMap.set(strippedTask, targetId);
+                        idTranslationMap.set(`T${strippedTask}`, targetId);
+                    }
+                }
+                return {
+                    rawTask: t,
+                    targetId
+                };
+            });
+
+            // Chuẩn hóa danh sách task và cập nhật depends_on
+            const tasks = normalizedTasks.map(({ rawTask: t, targetId }, idx) => {
+                const rawDeps = Array.isArray(t.depends_on)
+                    ? t.depends_on
+                    : (t.depends_on ? String(t.depends_on).split(/[;,]/).map(s => s.trim()) : []);
+
+                // Chuyển đổi các ID trong depends_on sang ID số nguyên mới đã tịnh tiến
+                const translatedDeps = rawDeps
+                    .map(dep => {
+                        const s = String(dep).trim();
+                        if (!s) return null;
+                        if (idTranslationMap.has(s)) return idTranslationMap.get(s);
+                        if (idTranslationMap.has(s.toLowerCase())) return idTranslationMap.get(s.toLowerCase());
+                        const stripped = s.replace(/^[Tt]ask\s*/i, "").replace(/^[Tt]/, "");
+                        if (idTranslationMap.has(stripped)) return idTranslationMap.get(stripped);
+                        if (idTranslationMap.has(`T${stripped}`)) return idTranslationMap.get(`T${stripped}`);
+                        return s;
+                    })
+                    .filter(dep => dep && dep !== targetId);
+
+                const uniqueDeps = Array.from(new Set(translatedDeps));
+
+                // Chuẩn hóa tên task: loại bỏ số thập phân như 1.1, Task 1.1 và tịnh tiến số thứ tự nếu tên task có gắn số
+                let rawName = String(t.name || t.task_title || `Công việc ${idx + 1}`).trim();
+                let cleanName = rawName;
+                const taskPrefixMatch = rawName.match(/^task\s*(?:\d+(?:\.\d+)?)(.*)$/i);
+                if (taskPrefixMatch) {
+                    const remainder = (taskPrefixMatch[1] || "").trim();
+                    if (!remainder) {
+                        cleanName = `Task ${idx + 1}`;
+                    } else if (remainder.startsWith("(") && remainder.endsWith(")")) {
+                        cleanName = `Task ${idx + 1} ${remainder}`;
+                    } else if (/^[:\.\-]\s*/.test(remainder)) {
+                        const stripped = remainder.replace(/^[:\.\-]\s*/, "").trim();
+                        cleanName = stripped || `Task ${idx + 1}`;
+                    } else {
+                        cleanName = `Task ${idx + 1} ${remainder}`;
+                    }
+                } else {
+                    const strippedDecimal = rawName.replace(/^\d+\.\d+[:\.\-]?\s*/, "").trim();
+                    cleanName = strippedDecimal || rawName;
+                }
+
+                return {
+                    id: targetId,
+                    task_seq: idx + 1,
+                    name: cleanName,
+                    duration: Number(t.duration) || (t.duration?.endsWith?.("d") ? parseFloat(t.duration) * 24 : 4),
+                    effort: t.effort ? Number(t.effort) : null,
+                    roles_required: Array.isArray(t.roles) ? t.roles : (t.roles ? String(t.roles).split(/[;,]/).map(s => s.trim()) : []),
+                    depends_on: uniqueDeps,
+                    complexity: Number(t.complexity) || 2,
+                    start: t.start || (t.is_live ? "event" : ""),
+                    is_live: Boolean(t.is_live || t.start === "event"),
+                    on_air: t.on_air ? new Date(t.on_air) : null,
+                    flags: []
+                };
+            });
 
             // 1. Kiểm tra vòng lặp
             const depCheck = this.checkDependency(tasks);
@@ -575,6 +645,25 @@
                 task_count: tasks.length,
                 tasks: taskInserts
             };
+        }
+
+        /**
+         * Trích xuất và giải mã khối timeline_data từ phản hồi của AI
+         */
+        async parseTimelineFromAI(messageContent) {
+            if (!messageContent || typeof messageContent !== "string") return null;
+            const match = messageContent.match(/```timeline_data\s*([\s\S]*?)\s*```/);
+            if (!match) return null;
+            try {
+                const parsed = JSON.parse(match[1]);
+                if (parsed.tasks && parsed.tasks.length >= 1) {
+                    const planResult = await this.planTimeline(parsed, parsed.tasks);
+                    if (planResult.ok) return planResult;
+                }
+            } catch (err) {
+                console.warn("[TimelineEngine] Lỗi phân tích timeline_data:", err);
+            }
+            return null;
         }
     }
 
