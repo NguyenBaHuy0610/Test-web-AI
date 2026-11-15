@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lịch & Deadline | AECPT</title>
     <script src="../js/i18n.js"></script>
+    <script src="../js/theme.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +14,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="../styles/sidebar.css">
     <link rel="stylesheet" href="../styles/task-calendar.css">
+    <link rel="stylesheet" href="../styles/theme.css">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -64,24 +66,6 @@
                     <i data-lucide="calendar-days" aria-hidden="true"></i>
                     <input type="date" id="calendarDatePicker" aria-label="Chọn ngày cần xem">
                 </label>
-
-                <button type="button"
-                        id="calendarPrevBtn"
-                        class="calendar-nav-btn"
-                        aria-label="Thời gian trước">
-
-                    <i data-lucide="chevron-left"></i>
-
-                </button>
-
-                <button type="button"
-                        id="calendarNextBtn"
-                        class="calendar-nav-btn"
-                        aria-label="Thời gian tiếp theo">
-
-                    <i data-lucide="chevron-right"></i>
-
-                </button>
 
             </div>
 
@@ -140,7 +124,6 @@
 
         </section>
 
-
         <!-- ==================================
              CALENDAR VIEW TOOLBAR
         =================================== -->
@@ -193,6 +176,40 @@
                 <span>Chỉ công việc của tôi</span>
 
             </button>
+
+        </section>
+
+        <section class="calendar-data-filters" aria-label="Lọc lịch công việc">
+
+            <label class="calendar-filter-field" for="calendarPeriodFilter">
+                <span>Khoảng thời gian</span>
+                <select id="calendarPeriodFilter">
+                    <option value="all">Tất cả thời gian</option>
+                    <option value="next7">7 ngày tới</option>
+                    <option value="next30">30 ngày tới</option>
+                    <option value="next90">90 ngày tới</option>
+                    <option value="overdue">Đã quá hạn</option>
+                    <option value="custom">Tùy chọn ngày</option>
+                </select>
+            </label>
+
+            <div class="calendar-custom-date-range" id="calendarCustomDateRange" hidden>
+                <label class="calendar-filter-field" for="calendarDateFrom">
+                    <span>Từ ngày</span>
+                    <input type="date" id="calendarDateFrom">
+                </label>
+                <label class="calendar-filter-field" for="calendarDateTo">
+                    <span>Đến ngày</span>
+                    <input type="date" id="calendarDateTo">
+                </label>
+            </div>
+
+            <label class="calendar-filter-field" for="calendarEventFilter">
+                <span>Sự kiện</span>
+                <select id="calendarEventFilter">
+                    <option value="">Tất cả sự kiện</option>
+                </select>
+            </label>
 
         </section>
 
@@ -506,6 +523,22 @@
                 </section>
 
 
+                <div class="calendar-bottom-navigation" aria-label="Điều hướng lịch">
+                    <button type="button"
+                            id="calendarPrevBtn"
+                            class="calendar-nav-btn"
+                            aria-label="Thời gian trước">
+                        <i data-lucide="chevron-left"></i>
+                    </button>
+
+                    <button type="button"
+                            id="calendarNextBtn"
+                            class="calendar-nav-btn"
+                            aria-label="Thời gian tiếp theo">
+                        <i data-lucide="chevron-right"></i>
+                    </button>
+                </div>
+
             </div>
 
 
@@ -787,13 +820,13 @@
      SCRIPTS
 =================================== -->
 
-<script src="../js/sidebar.js"></script>
-
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <!-- Supabase Client -->
 <script src="../js/supabase.js"></script>
+
+<script src="../js/sidebar.js"></script>
 
 <!-- Calendar and Supabase data logic -->
 <script src="../js/task-calendar.js"></script>

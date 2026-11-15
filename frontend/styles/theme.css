@@ -1,0 +1,557 @@
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --primary: #7486f4;
+    --primary-dark: #a8b5ff;
+    --primary-light: #293452;
+    --primary-soft: #242f49;
+    --primary-hover: #8393ff;
+    --background: #151a24;
+    --white: #1d2532;
+    --surface: #1d2532;
+    --surface-secondary: #252f3e;
+    --text-primary: #e8edf5;
+    --text-secondary: #b0bbcb;
+    --text-muted: #8e9aad;
+    --border: #394659;
+    --border-dark: #4b5a70;
+    --border-color: #394659;
+    --bg-secondary: #252f3e;
+    --success: #55c99a;
+    --success-light: #1d3b32;
+    --success-bg: #1d3b32;
+    --warning: #e9b957;
+    --warning-bg: #45391f;
+    --danger: #f07f89;
+    --danger-bg: #442a31;
+    --info: #8aa8f5;
+    --info-bg: #253452;
+    --setting-primary: #7486f4;
+    --setting-primary-dark: #a8b5ff;
+    --setting-primary-light: #293452;
+    --setting-background: #151a24;
+    --setting-surface: #1d2532;
+    --setting-text: #e8edf5;
+    --setting-muted: #b0bbcb;
+    --setting-border: #394659;
+    --setting-success: #55c99a;
+    --setting-danger: #f07f89;
+    --setting-danger-bg: #442a31;
+    --setting-switch-off: #475569;
+}
+
+html[data-theme="dark"] body,
+html[data-theme="dark"] .main-content,
+html[data-theme="dark"] .app-layout,
+html[data-theme="dark"] .tasks-page,
+html[data-theme="dark"] .members-page,
+html[data-theme="dark"] .settings-page,
+html[data-theme="dark"] .history-page,
+html[data-theme="dark"] .calendar-page,
+html[data-theme="dark"] .task-list-page {
+    background-color: var(--background) !important;
+    color: var(--text-primary);
+}
+
+html[data-theme="dark"] .sidebar,
+html[data-theme="dark"] .topbar,
+html[data-theme="dark"] .member-table-wrapper,
+html[data-theme="dark"] [class*="-card"],
+html[data-theme="dark"] [class*="-panel"],
+html[data-theme="dark"] [class*="-modal"]:not(.event-modal-backdrop):not(.history-task-modal),
+html[data-theme="dark"] [class*="table-card"],
+html[data-theme="dark"] [class*="table-wrapper"],
+html[data-theme="dark"] [class*="popover"] {
+    background-color: var(--surface) !important;
+    color: var(--text-primary);
+    border-color: var(--border);
+}
+
+html[data-theme="dark"] body h1,
+html[data-theme="dark"] body h2,
+html[data-theme="dark"] body h3,
+html[data-theme="dark"] body h4,
+html[data-theme="dark"] body h5,
+html[data-theme="dark"] body h6,
+html[data-theme="dark"] body th,
+html[data-theme="dark"] body td,
+html[data-theme="dark"] .topbar-info p,
+html[data-theme="dark"] .workspace-name,
+html[data-theme="dark"] .section-label,
+html[data-theme="dark"] .user-info strong,
+html[data-theme="dark"] .menu-item,
+html[data-theme="dark"] .chat-history-item {
+    color: var(--text-primary);
+}
+
+html[data-theme="dark"] body p,
+html[data-theme="dark"] body label,
+html[data-theme="dark"] body small,
+html[data-theme="dark"] .user-info span,
+html[data-theme="dark"] .topbar-info p,
+html[data-theme="dark"] .notification-list-empty {
+    color: var(--text-secondary);
+}
+
+html[data-theme="dark"] body .field-error,
+html[data-theme="dark"] body .error-message,
+html[data-theme="dark"] body .form-feedback.is-error,
+html[data-theme="dark"] body .availability-message.is-error {
+    color: #ff9aa3;
+}
+
+html[data-theme="dark"] body input,
+html[data-theme="dark"] body select,
+html[data-theme="dark"] body textarea {
+    background-color: var(--surface-secondary);
+    color: var(--text-primary);
+    border-color: var(--border);
+}
+
+html[data-theme="dark"] body input::placeholder,
+html[data-theme="dark"] body textarea::placeholder {
+    color: var(--text-muted);
+}
+
+html[data-theme="dark"] body table,
+html[data-theme="dark"] body thead,
+html[data-theme="dark"] body th,
+html[data-theme="dark"] body td {
+    border-color: var(--border);
+}
+
+html[data-theme="dark"] body thead,
+html[data-theme="dark"] body th {
+    background-color: var(--surface-secondary);
+}
+
+html[data-theme="dark"] .sidebar {
+    border-right-color: var(--border);
+}
+
+html[data-theme="dark"] .sidebar-brand span,
+html[data-theme="dark"] .topbar-info h1 {
+    color: var(--text-primary);
+}
+
+html[data-theme="dark"] .menu-item:hover,
+html[data-theme="dark"] .chat-history-item:hover,
+html[data-theme="dark"] .setting-button:hover,
+html[data-theme="dark"] .notification-bell-button:hover,
+html[data-theme="dark"] .notification-bell-button[aria-expanded="true"] {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+html[data-theme="dark"] .menu-item.active {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+html[data-theme="dark"] .sidebar-user,
+html[data-theme="dark"] .notification-panel-header,
+html[data-theme="dark"] .notification-item,
+html[data-theme="dark"] .ace-chatbot-header {
+    border-color: var(--border);
+}
+
+html[data-theme="dark"] .notification-panel,
+html[data-theme="dark"] .notification-detail-dialog,
+html[data-theme="dark"] .ace-chatbot-panel,
+html[data-theme="dark"] .ace-chatbot-history,
+html[data-theme="dark"] .ace-chatbot-messages {
+    background-color: var(--surface);
+    color: var(--text-primary);
+    border-color: var(--border);
+}
+
+html[data-theme="dark"] .notification-detail-dialog > p {
+    color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .notification-detail-meta {
+    color: var(--text-muted);
+}
+
+html[data-theme="dark"] .notification-detail-dialog footer button {
+    background-color: var(--surface-secondary);
+    color: var(--text-primary);
+    border-color: var(--border);
+}
+
+html[data-theme="dark"] .notification-detail-dialog footer .notification-detail-task-button {
+    background-color: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+html[data-theme="dark"] .setting-button,
+html[data-theme="dark"] .notification-bell-button {
+    color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .member-table tbody tr:hover,
+html[data-theme="dark"] [class*="table"] tbody tr:hover {
+    background-color: var(--surface-secondary);
+}
+
+html[data-theme="dark"] .member-table tbody tr.current-user-member td {
+    border-color: #D4A017;
+}
+
+html[data-theme="dark"] .ace-chatbot-welcome,
+html[data-theme="dark"] .ace-chatbot-suggestions button,
+html[data-theme="dark"] .ace-chatbot-composer {
+    background-color: var(--surface-secondary);
+    color: var(--text-primary);
+    border-color: var(--border);
+}
+
+html[data-theme="dark"] .ace-chatbot-input,
+html[data-theme="dark"] .ace-chatbot-composer input {
+    color: var(--text-primary);
+}
+
+html[data-theme="dark"] .message-bubble,
+html[data-theme="dark"] .message-avatar,
+html[data-theme="dark"] .event-selector-box,
+html[data-theme="dark"] .event-dropdown,
+html[data-theme="dark"] .active-event-card,
+html[data-theme="dark"] .active-event-dates,
+html[data-theme="dark"] .active-event-pill,
+html[data-theme="dark"] .timeline-preview-card {
+    background-color: var(--surface-secondary);
+    color: var(--text-primary);
+    border-color: var(--border);
+}
+
+html[data-theme="dark"] .message-row.user .message-bubble,
+html[data-theme="dark"] .message-avatar.user-avatar-small {
+    background-color: #303b4c;
+    color: var(--text-primary);
+}
+
+html[data-theme="dark"] .active-event-name,
+html[data-theme="dark"] .active-event-desc,
+html[data-theme="dark"] .active-event-meta,
+html[data-theme="dark"] .quick-icon,
+html[data-theme="dark"] .quick-card-text strong {
+    color: var(--text-primary);
+}
+
+html[data-theme="dark"] .active-event-badge {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+html[data-theme="dark"] .active-event-pill.strict-pill {
+    background-color: var(--success-bg);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+html[data-theme="dark"] .team-deadline-alert {
+    background-color: #352e1f;
+    border-color: #65532d;
+}
+
+html[data-theme="dark"] .team-deadline-item {
+    background-color: var(--surface-secondary);
+    border-color: #65532d;
+    color: var(--text-primary);
+}
+
+html[data-theme="dark"] .team-deadline-item:hover {
+    background-color: #3d3524;
+}
+
+html[data-theme="dark"] .team-deadline-heading h2,
+html[data-theme="dark"] .team-deadline-count {
+    color: #f0cc75;
+}
+
+html[data-theme="dark"] .team-deadline-heading p {
+    color: #cfbc8a;
+}
+
+html[data-theme="dark"] .team-deadline-icon,
+html[data-theme="dark"] .team-deadline-count {
+    background-color: #493c22;
+}
+
+html[data-theme="dark"] .team-deadline-icon,
+html[data-theme="dark"] .team-deadline-task-due strong {
+    color: #f0cc75;
+}
+
+html[data-theme="dark"] .search-box input,
+html[data-theme="dark"] .history-search input,
+html[data-theme="dark"] .task-search-box input,
+html[data-theme="dark"] .chat-composer input {
+    background-color: transparent;
+}
+
+html[data-theme="dark"] .assistant-status {
+    background-color: var(--surface-secondary);
+    color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .event-card-icon,
+html[data-theme="dark"] .chat-panel-icon {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+html[data-theme="dark"] .event-card-copy strong,
+html[data-theme="dark"] .chat-panel-header strong,
+html[data-theme="dark"] .quick-card-text strong,
+html[data-theme="dark"] .chat-empty-state p {
+    color: var(--text-primary);
+}
+
+html[data-theme="dark"] .event-card-copy small,
+html[data-theme="dark"] .chat-panel-header small,
+html[data-theme="dark"] .quick-card-text small,
+html[data-theme="dark"] .chat-empty-state span,
+html[data-theme="dark"] .event-selector-title {
+    color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .no-event-card,
+html[data-theme="dark"] .quick-icon,
+html[data-theme="dark"] .active-event-status {
+    color: var(--text-primary);
+}
+
+html[data-theme="dark"] .active-event-status {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+html[data-theme="dark"] .chat-composer {
+    background-color: var(--surface);
+    border-color: var(--border);
+}
+
+html[data-theme="dark"] .chat-composer input {
+    color: var(--text-primary);
+}
+
+html[data-theme="dark"] .chat-composer input::placeholder {
+    color: var(--text-muted);
+}
+
+html[data-theme="dark"] .timeline-table th,
+html[data-theme="dark"] .normal-badge {
+    background-color: var(--surface-secondary);
+    color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .critical-badge {
+    background-color: var(--danger-bg);
+    color: var(--danger);
+}
+
+html[data-theme="dark"] .event-modal-header h2,
+html[data-theme="dark"] .event-modal-field span {
+    color: var(--text-primary);
+}
+
+html[data-theme="dark"] .event-modal-close {
+    color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .event-modal-close:hover,
+html[data-theme="dark"] .event-modal-cancel {
+    background-color: var(--surface-secondary);
+    color: var(--text-primary);
+}
+
+html[data-theme="dark"] .event-modal-cancel,
+html[data-theme="dark"] .event-modal-field input,
+html[data-theme="dark"] .event-modal-field textarea {
+    border-color: var(--border);
+}
+
+html[data-theme="dark"] .team-deadline-empty {
+    background-color: var(--surface-secondary);
+    border-color: #65532d;
+    color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .member-table tbody tr.current-user-member td {
+    background-color: #352e1f;
+    color: var(--text-primary);
+}
+
+html[data-theme="dark"] .member-avatar {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+html[data-theme="dark"] .group-badge {
+    background-color: var(--surface-secondary);
+    color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .selected-skill-tag {
+    background-color: var(--surface-secondary);
+    border-color: var(--border);
+    color: var(--text-primary);
+}
+
+html[data-theme="dark"] .table-footer,
+html[data-theme="dark"] .drawer-footer {
+    background-color: var(--surface);
+    color: var(--text-secondary);
+    border-color: var(--border);
+}
+
+html[data-theme="dark"] .history-notice {
+    background-color: var(--info-bg);
+    border-color: var(--border);
+    color: var(--info);
+}
+
+html[data-theme="dark"] .history-table-head,
+html[data-theme="dark"] .event-task-table th {
+    background-color: var(--surface-secondary);
+    color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .event-details,
+html[data-theme="dark"] .history-assignee-list li {
+    background-color: var(--surface-secondary);
+    border-color: var(--border);
+}
+
+html[data-theme="dark"] .event-status,
+html[data-theme="dark"] .filter-tag,
+html[data-theme="dark"] .task-status {
+    background-color: var(--surface-secondary);
+    color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .task-status.completed {
+    background-color: var(--success-bg);
+    color: var(--success);
+}
+
+html[data-theme="dark"] .task-status.in_progress {
+    background-color: var(--warning-bg);
+    color: var(--warning);
+}
+
+html[data-theme="dark"] .task-status.pending_review {
+    background-color: var(--info-bg);
+    color: var(--info);
+}
+
+html[data-theme="dark"] .event-toggle:hover,
+html[data-theme="dark"] .clear-filters:hover {
+    background-color: var(--surface-secondary);
+    border-color: var(--border-dark);
+}
+
+html[data-theme="dark"] .overdue-badge,
+html[data-theme="dark"] .status-cancelled,
+html[data-theme="dark"] .overdue-status-tab.active {
+    background-color: var(--danger-bg);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+html[data-theme="dark"] .task-attachment-delete {
+    background-color: var(--danger-bg);
+    border-color: var(--border);
+    color: var(--danger);
+}
+
+html[data-theme="dark"] .task-attachment-delete:hover {
+    background-color: #512d35;
+    border-color: var(--danger);
+}
+
+html[data-theme="dark"] .btn-secondary,
+html[data-theme="dark"] .btn-light,
+html[data-theme="dark"] .detail-back-button {
+    background-color: var(--surface-secondary);
+    border-color: var(--border);
+    color: var(--text-primary);
+}
+
+html[data-theme="dark"] .btn-secondary:hover:not(:disabled),
+html[data-theme="dark"] .btn-light:hover:not(:disabled),
+html[data-theme="dark"] .detail-back-button:hover {
+    background-color: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary-dark);
+}
+
+html[data-theme="dark"] .month-day-cell.is-outside {
+    background-color: var(--background);
+}
+
+html[data-theme="dark"] .month-day-cell.is-today,
+html[data-theme="dark"] .gantt-row:hover {
+    background-color: var(--primary-soft);
+}
+
+html[data-theme="dark"] .month-day-task:hover {
+    background-color: var(--primary-light);
+}
+
+html[data-theme="dark"] .month-day-task.is-completed,
+html[data-theme="dark"] .gantt-bar.is-completed {
+    background-color: var(--success-bg);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+html[data-theme="dark"] .month-day-task.is-overdue {
+    background-color: var(--danger-bg);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+html[data-theme="dark"] .calendar-status-chip.status-pending {
+    color: var(--warning);
+}
+
+html[data-theme="dark"] .upcoming-task-progress {
+    background-color: var(--surface-secondary);
+}
+
+html[data-theme="dark"] .event-modal-backdrop,
+html[data-theme="dark"] .history-task-modal {
+    background-color: rgba(8, 12, 20, 0.68);
+}
+
+html[data-theme="dark"] .add-member-btn,
+html[data-theme="dark"] .save-btn,
+html[data-theme="dark"] .filter-btn.active,
+html[data-theme="dark"] .filter-btn.active span,
+html[data-theme="dark"] .filter-btn.active svg,
+html[data-theme="dark"] .status-tab.active:not(.overdue-status-tab),
+html[data-theme="dark"] .comment-form button,
+html[data-theme="dark"] .primary-action,
+html[data-theme="dark"] .overdue-status-tab.active {
+    color: #fff;
+}
+
+html[data-theme="dark"] .group-chip {
+    background-color: var(--surface-secondary);
+    color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .status-not_started {
+    background-color: var(--surface-secondary);
+    color: var(--text-secondary);
+}
+
+html[data-theme="dark"] .event-details {
+    border-color: var(--border);
+}
+
+html[data-theme="dark"] .month-day-cell.is-outside .month-day-number {
+    color: var(--text-muted);
+}

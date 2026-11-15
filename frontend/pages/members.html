@@ -7,6 +7,7 @@
 
     <title>Thành viên | AECPT</title>
     <script src="../js/i18n.js"></script>
+    <script src="../js/theme.js"></script>
 
     <!-- Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,6 +21,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="../styles/sidebar.css">
     <link rel="stylesheet" href="../styles/members.css">
+    <link rel="stylesheet" href="../styles/theme.css">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -52,8 +54,7 @@
                     <h1>Thành viên</h1>
 
                     <p>
-                        Quản lý và theo dõi thông tin các thành viên
-                        trong ban Multimedia.
+                        Quản lý các thành viên trong workspace của bạn.
                     </p>
 
                 </div>
@@ -154,7 +155,6 @@
                 </button>
 
             </section>
-
 
             <!-- ==============================
                  MEMBER TABLE
@@ -309,7 +309,6 @@
 
     <!-- ==============================
          ADD MEMBER MODAL
-         GIỮ LẠI FORM CŨ CỦA BẠN
     =============================== -->
 
   <div class="modal-overlay" id="addMemberModal">
@@ -317,7 +316,7 @@
         <div class="modal-header">
             <div>
                 <h2>Thêm thành viên</h2>
-                <p>Thêm thành viên mới vào không gian ban Multimedia</p>
+                <p>Tạo tài khoản để thành viên đăng nhập vào workspace của bạn.</p>
             </div>
             <button
                 type="button"
@@ -332,32 +331,32 @@
         <form id="addMemberForm">
             <div class="form-group">
                 <label for="memberName">Họ và tên</label>
-                <input 
+                <input
                     type="text"
                     id="memberName"
                     name="memberName"
                     placeholder="Nhập họ và tên"
+                    autocomplete="name"
+                    maxlength="100"
                     required
                 >
-
                 <small class="error-message" id="nameError"></small>
             </div>
 
             <div class="form-group">
-                <label for="memberEmail">
-                    Email
-                </label>
+                <label for="memberEmail">Email</label>
                 <div class="input-container">
                     <span class="input-icon">✉</span>
-                    <input 
+                    <input
                         type="email"
                         id="memberEmail"
                         name="memberEmail"
                         placeholder="Nhập địa chỉ email"
+                        autocomplete="email"
+                        maxlength="254"
                         required
                     >
                 </div>
-
                 <small class="error-message" id="emailError"></small>
             </div>
 
@@ -370,11 +369,16 @@
                         name="initialPassword"
                         placeholder="Nhập mật khẩu ban đầu"
                         minlength="8"
+                        maxlength="128"
                         autocomplete="new-password"
                         required
                     >
-                    <button type="button" class="password-visibility-toggle"
-                            id="toggleMemberInitialPassword" aria-label="Hiện mật khẩu">
+                    <button
+                        type="button"
+                        class="password-visibility-toggle"
+                        id="toggleMemberInitialPassword"
+                        aria-label="Hiện mật khẩu"
+                    >
                         Hiện
                     </button>
                 </div>
@@ -382,34 +386,17 @@
             </div>
 
             <div class="form-group">
-                <label for="memberRole">
-                    Vai trò
-                </label>
-
-                <select
-                    id="memberRole"
-                    name="memberRole"
-                    required
-                >
-                    <option value="" disabled selected>
-                        Chọn vai trò
-                    </option>
-
-                    <option Value="Trưởng nhóm">
-                        Trưởng nhóm
-                    </option>
-
-                    <option value="Thành viên">
-                        Thành viên
-                    </option>
+                <label for="memberRole">Vai trò</label>
+                <select id="memberRole" name="accountRole" required>
+                    <option value="leader">Trưởng nhóm</option>
+                    <option value="member" selected>Thành viên</option>
                 </select>
-
-                <small class="field-hint">
-                    Trưởng nhóm, Thành viên
-                </small>
-
+                <small class="field-hint">Trưởng nhóm, Thành viên</small>
                 <small class="error-message" id="roleError"></small>
             </div>
+
+            <p class="workspace-invitation-feedback" id="workspaceInvitationFeedback"
+               role="status" aria-live="polite"></p>
 
             <div class="modal-actions">
                 <button
@@ -573,15 +560,13 @@
          JAVASCRIPT
     =============================== -->
 
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="../js/sidebar.js"></script>
-
     <!-- Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <!-- Supabase Connection -->
     <script src="../js/supabase.js"></script>
 
+    <script src="../js/sidebar.js"></script>
     <script src="../js/members.js"></script>
 
     <script>

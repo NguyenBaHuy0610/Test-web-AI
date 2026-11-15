@@ -20,6 +20,10 @@
         view: "month",
         ganttScale: "day",
         myTasksOnly: false,
+        period: "all",
+        customDateFrom: "",
+        customDateTo: "",
+        eventId: "",
         selectedTaskId: null,
         currentUserId: null,
         currentMemberId: CONFIG.memberId,
@@ -47,6 +51,11 @@
         weekBtn: $("#weekViewBtn"),
         ganttBtn: $("#ganttViewBtn"),
         personalBtn: $("#myTasksOnlyBtn"),
+        periodFilter: $("#calendarPeriodFilter"),
+        customDateRange: $("#calendarCustomDateRange"),
+        dateFrom: $("#calendarDateFrom"),
+        dateTo: $("#calendarDateTo"),
+        eventFilter: $("#calendarEventFilter"),
 
         monthView: $("#monthView"),
         weekView: $("#weekView"),
@@ -310,6 +319,13 @@
         return Array.isArray(task.events) ? task.events[0] : task.events;
     }
 
+    function getTaskEventLabel(task) {
+        const event = getTaskEvent(task);
+        return event
+            ? [event.event_label, event.event_category].filter(Boolean).join(" · ") || task.event_id
+            : task.event_id || "Chưa gắn sự kiện";
+    }
+
     function priorityLabel(priority) {
         return {
             low: "Thấp",
@@ -322,6 +338,12 @@
         let rows = state.tasks.filter(task =>
             !task.is_cancelled && task.status !== "cancelled"
         );
+
+        if (state.eventId) {
+            rows = rows.filter(task =>
+                String(task.event_id || "") === state.eventId
+            );
+        }
 
         if (state.myTasksOnly && state.currentMemberId) {
             rows = rows.filter(task =>
@@ -342,11 +364,84 @@
                 deadline: getTaskDeadline(task)
             }))
             .filter(item => item.deadline)
+            .filter(({ task, deadline }) => matchesPeriod(task, deadline))
             .sort((a, b) => a.deadline - b.deadline);
     }
 
+    function matchesPeriod(task, deadline, now = new Date()) {
+        if (state.period === "all") return true;
+        if (state.period === "overdue") return isOverdue(task, deadline, now);
+
+        const startOfToday = startOfDay(now);
+        if (state.period === "next7" ||
+            state.period === "next30" ||
+            state.period === "next90") {
+            const days = Number(state.period.slice(4));
+            const endExclusive = addDays(startOfToday, days);
+            return deadline >= startOfToday &&
+                deadline < endExclusive &&
+                !isOverdue(task, deadline, now);
+        }
+
+        if (state.period === "custom") {
+            if (state.customDateFrom) {
+                const from = parseDate(state.customDateFrom);
+                if (from && deadline < startOfDay(from)) return false;
+            }
+            if (state.customDateTo) {
+                const to = parseDate(state.customDateTo);
+                if (to && deadline >= addDays(startOfDay(to), 1)) return false;
+            }
+        }
+
+        return true;
+    }
+
     function isOverdue(task, deadline, now = new Date()) {
-        return !!deadline && deadline < now && !isCompleted(task);
+        if (!deadline || isCompleted(task)) return false;
+        if (task.package_deadline_at || task.package_deadline_time) {
+            return deadline < now;
+        }
+        return startOfDay(deadline) < startOfDay(now);
+    }
+
+    function populateEventFilter() {
+        if (!elements.eventFilter) return;
+
+        const events = new Map();
+        state.tasks.forEach(task => {
+            if (task.event_id == null) return;
+            const id = String(task.event_id);
+            if (!events.has(id)) events.set(id, getTaskEventLabel(task));
+        });
+
+        const options = [...events.entries()]
+            .sort((a, b) => a[1].localeCompare(b[1], window.AppI18n?.locale || "vi"))
+            .map(([id, label]) =>
+                `<option value="${escapeHTML(id)}">${escapeHTML(label)}</option>`
+            );
+
+        elements.eventFilter.innerHTML =
+            '<option value="">Tất cả sự kiện</option>' + options.join("");
+        elements.eventFilter.value = state.eventId;
+    }
+
+    function syncPeriodControls() {
+        if (elements.periodFilter) {
+            elements.periodFilter.value = state.period;
+        }
+        if (elements.customDateRange) {
+            elements.customDateRange.hidden = state.period !== "custom";
+        }
+        if (elements.dateFrom) {
+            elements.dateFrom.value = state.customDateFrom;
+        }
+        if (elements.dateTo) {
+            elements.dateTo.value = state.customDateTo;
+        }
+        if (elements.eventFilter) {
+            elements.eventFilter.value = state.eventId;
+        }
     }
 
     function getDeadlineClass(task, deadline) {
@@ -743,6 +838,28 @@
        GANTT CHART
     ============================== */
 
+    function updateGanttTodayLabelVisibility() {
+        const label = elements.ganttChart?.querySelector(".gantt-today-label");
+        const line = elements.ganttChart?.querySelector(".gantt-today-line");
+        if (!label || !line || !elements.ganttScroll) return;
+
+        const scrollBounds = elements.ganttScroll.getBoundingClientRect();
+        const stickyColumn = elements.ganttChart.querySelector(".gantt-task-info");
+        const stickyRight = stickyColumn
+            ? stickyColumn.getBoundingClientRect().right
+            : scrollBounds.left;
+        const labelBounds = label.getBoundingClientRect();
+        const lineX = line.getBoundingClientRect().left;
+        const visibleLeft = Math.max(scrollBounds.left, stickyRight);
+        const isVisible =
+            lineX >= visibleLeft &&
+            lineX <= scrollBounds.right &&
+            labelBounds.left >= visibleLeft &&
+            labelBounds.right <= scrollBounds.right;
+
+        label.style.visibility = isVisible ? "visible" : "hidden";
+    }
+
     function renderGanttView() {
         if (!elements.ganttChart) return;
 
@@ -956,6 +1073,7 @@
         if (elements.ganttScroll) {
             requestAnimationFrame(() => {
                 elements.ganttScroll.scrollLeft = 0;
+                updateGanttTodayLabelVisibility();
             });
         }
 
@@ -1179,6 +1297,34 @@
     ============================== */
 
     function setupEvents() {
+        let isTodayLabelUpdateScheduled = false;
+        elements.ganttScroll?.addEventListener("scroll", () => {
+            if (isTodayLabelUpdateScheduled) return;
+            isTodayLabelUpdateScheduled = true;
+            requestAnimationFrame(() => {
+                isTodayLabelUpdateScheduled = false;
+                updateGanttTodayLabelVisibility();
+            });
+        }, { passive: true });
+
+        elements.periodFilter?.addEventListener("change", event => {
+            state.period = event.target.value || "all";
+            syncPeriodControls();
+            renderAll();
+        });
+        elements.dateFrom?.addEventListener("change", event => {
+            state.customDateFrom = event.target.value;
+            renderAll();
+        });
+        elements.dateTo?.addEventListener("change", event => {
+            state.customDateTo = event.target.value;
+            renderAll();
+        });
+        elements.eventFilter?.addEventListener("change", event => {
+            state.eventId = event.target.value;
+            renderAll();
+        });
+
         elements.todayBtn?.addEventListener("click", goToToday);
         elements.datePicker?.addEventListener("change", event => {
             const date = parseDate(event.target.value);
@@ -1340,11 +1486,14 @@
         elements.openFullTaskBtn?.addEventListener("click", () => {
             if (!state.selectedTaskId) return;
 
-            // Chưa có route trang task-detail được cung cấp.
-            alert(
-                `Mã công việc: ${state.selectedTaskId}\n` +
-                "Chưa cấu hình đường dẫn trang chi tiết công việc."
-            );
+            const task = findTask(state.selectedTaskId);
+            const event = task ? getTaskEvent(task) : null;
+            const isArchived = !!task &&
+                (isCompleted(task) || event?.is_completed === true);
+            const destination = isArchived ? "history.html" : "task-list.html";
+            const taskUrl = new URL(destination, window.location.href);
+            taskUrl.searchParams.set("taskId", state.selectedTaskId);
+            window.location.assign(taskUrl.href);
         });
     }
 
@@ -1478,7 +1627,8 @@
                         events (
                             event_label,
                             event_category,
-                            category_note
+                            category_note,
+                            is_completed
                         )
                     `)
                     .order(
@@ -1513,6 +1663,8 @@
 
             state.tasks = tasksResult.data || [];
             state.assignments = assignmentsResult.data || [];
+            populateEventFilter();
+            syncPeriodControls();
 
             await resolveCurrentMember();
 

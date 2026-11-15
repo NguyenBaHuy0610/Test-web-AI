@@ -269,6 +269,10 @@ svg {
     background: var(--primary-soft);
 }
 
+.filter-menu-container {
+    position: relative;
+}
+
 
 /* =====================================================
    5. SUMMARY CARDS
@@ -289,7 +293,7 @@ svg {
 
 .summary-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
 
     gap: 14px;
 }
@@ -306,6 +310,166 @@ svg {
     border-radius: var(--radius-lg);
 
     transition: var(--transition);
+}
+
+button.summary-card {
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+}
+
+.overdue-summary-card .summary-card-header,
+.overdue-summary-card > strong {
+    color: #B42318;
+}
+
+.overdue-summary-card:hover,
+.overdue-summary-card.is-active {
+    border-color: #F2A39D;
+    background: #FFF6F5;
+}
+
+.overdue-summary-card:focus-visible {
+    outline: 3px solid rgba(180, 35, 24, .2);
+    outline-offset: 2px;
+}
+
+.team-deadline-alert {
+    margin: -4px 0 18px;
+    padding: 14px;
+    background: #FFFBF2;
+    border: 1px solid #F3D28B;
+    border-radius: 10px;
+}
+
+.team-deadline-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 4px;
+}
+
+.team-deadline-icon {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    place-items: center;
+    color: #9A6700;
+    background: #FFF1CC;
+    border-radius: 10px;
+}
+
+.team-deadline-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.team-deadline-heading h2 {
+    margin: 0;
+    color: #754F00;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.team-deadline-heading p {
+    margin-top: 4px;
+    color: #806B43;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.team-deadline-count {
+    display: grid;
+    min-width: 28px;
+    height: 28px;
+    flex: 0 0 auto;
+    place-items: center;
+    margin-left: auto;
+    padding: 0 7px;
+    color: #805A11;
+    background: #FFF0C2;
+    border-radius: 50%;
+    font-size: 11px;
+}
+
+.team-deadline-list {
+    display: grid;
+    gap: 7px;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.team-deadline-item {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 9px 11px;
+    color: var(--text-primary);
+    text-align: left;
+    background: #fff;
+    border: 1px solid #F3E4BE;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.team-deadline-item:hover {
+    border-color: #D9AE4B;
+    background: #FFFEFA;
+    box-shadow: var(--shadow-sm);
+}
+
+.team-deadline-item:focus-visible {
+    outline: 3px solid rgba(154, 106, 19, .2);
+    outline-offset: 2px;
+}
+
+.team-deadline-task-info,
+.team-deadline-task-due {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.team-deadline-task-info strong {
+    overflow: hidden;
+    color: var(--text-primary);
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.team-deadline-task-info small,
+.team-deadline-task-due small {
+    color: var(--text-muted);
+    font-size: 9px;
+}
+
+.team-deadline-task-due {
+    flex: 0 0 auto;
+    align-items: flex-end;
+    text-align: right;
+}
+
+.team-deadline-task-due strong {
+    color: #9A6700;
+    font-size: 10px;
+}
+
+.team-deadline-empty {
+    margin: 0;
+    padding: 13px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    background: #fff;
+    border: 1px solid #F3E4BE;
+    border-radius: 8px;
 }
 
 
@@ -402,7 +566,7 @@ svg {
 
 .filter-toolbar {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
 
     gap: 15px;
@@ -447,6 +611,17 @@ svg {
     border-color: #E0E4FF;
 
     font-weight: 600;
+}
+
+.overdue-status-tab.active {
+    color: #B42318;
+    background: #FFF0EE;
+    border-color: #F2A39D;
+}
+
+.overdue-status-tab span {
+    margin-left: 4px;
+    font-weight: 700;
 }
 
 
@@ -498,20 +673,39 @@ svg {
 /* Advanced filters */
 
 .advanced-filter-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 20;
     display: flex;
-    align-items: flex-end;
-    flex-wrap: wrap;
-
-    gap: 15px;
-
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    width: min(440px, calc(100vw - 32px));
+    max-height: min(70vh, 560px);
+    overflow-y: auto;
     padding: 16px;
-
-    margin-top: 12px;
-
     background: var(--surface);
-
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.filter-panel-section {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.filter-panel-label {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.advanced-filter-panel .group-filter-list,
+.advanced-filter-panel .status-filter-list {
+    margin-bottom: 0;
 }
 
 
@@ -663,6 +857,34 @@ svg {
 
 .task-table tbody tr:last-child td {
     border-bottom: none;
+}
+
+.deadline-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.overdue-badge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: #FFF0EE;
+    color: #B42318;
+    font-size: 9px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.detail-overdue-badge {
+    font-size: 10px;
+}
+
+.task-row-overdue td:first-child {
+    box-shadow: inset 3px 0 #D92D20;
 }
 
 
@@ -1016,6 +1238,30 @@ svg {
     scrollbar-color: #D8DDEA transparent;
 }
 
+.detail-back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0 0 16px;
+    padding: 8px 11px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--primary);
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.detail-back-button:hover {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+}
+
+.detail-back-button[hidden] { display: none; }
+.detail-back-button svg { width: 15px; height: 15px; }
+
 
 .drawer-content::-webkit-scrollbar,
 .detail-drawer::-webkit-scrollbar {
@@ -1286,6 +1532,70 @@ svg {
     border-radius: 20px;
 
     transition: width 0.3s ease;
+}
+
+.dependency-list, .assignee-contact-list {
+    display: grid;
+    gap: 8px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.dependency-item, .assignee-contact {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: #F8F9FC;
+}
+
+.dependency-task, .assignee-contact-info {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.dependency-task {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.dependency-task:hover strong { color: var(--primary); }
+.dependency-task:disabled { cursor: default; }
+.dependency-open-label { color: var(--primary); font-size: 9px; }
+
+.dependency-task strong, .assignee-contact-info strong {
+    overflow: hidden;
+    color: var(--text-primary);
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dependency-task small, .assignee-contact-info small {
+    color: var(--text-muted);
+    font-size: 9px;
+}
+
+.assignee-contact > a {
+    color: var(--primary);
+    font-size: 9px;
+    overflow-wrap: anywhere;
+}
+
+.contact-unavailable {
+    color: var(--text-muted);
+    font-size: 9px;
 }
 
 
@@ -1942,7 +2252,7 @@ svg {
     }
 
     .summary-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
 }
@@ -1980,6 +2290,17 @@ svg {
 
 
 @media (max-width: 600px) {
+
+    .team-deadline-item {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .team-deadline-task-due {
+        align-items: flex-start;
+        text-align: left;
+    }
 
     .main-content {
         margin-left: var(--sidebar-width);

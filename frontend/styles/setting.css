@@ -9,6 +9,8 @@
     --setting-border: #e7e9f0;
     --setting-success: #27805e;
     --setting-danger: #b1434c;
+    --setting-danger-bg: #fff4f4;
+    --setting-switch-off: #d9deea;
 }
 
 * {
@@ -87,6 +89,73 @@ button {
     box-shadow: 0 2px 8px rgba(32, 44, 74, 0.04);
 }
 
+.appearance-settings-card {
+    padding: 14px 18px;
+}
+
+.appearance-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.appearance-option-info {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 11px;
+}
+
+.appearance-option-info h2 {
+    margin: 0;
+    color: var(--setting-text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.appearance-option-info .settings-icon {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+}
+
+.theme-setting-button {
+    position: relative;
+    display: inline-flex;
+    width: 42px;
+    height: 24px;
+    flex: 0 0 auto;
+    align-items: center;
+    padding: 2px;
+    background: #d9deea;
+    border: 0;
+    border-radius: 20px;
+    transition: background 0.16s ease;
+}
+
+.theme-setting-button[aria-pressed="true"] {
+    background: var(--setting-primary);
+}
+
+.theme-switch-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(32, 44, 74, 0.2);
+    transition: transform 0.16s ease;
+}
+
+.theme-setting-button[aria-pressed="true"] .theme-switch-thumb {
+    transform: translateX(18px);
+}
+
+.theme-setting-button:focus-visible {
+    outline: 3px solid rgba(91, 111, 225, 0.3);
+    outline-offset: 2px;
+}
+
 .settings-card-heading {
     display: flex;
     align-items: flex-start;
@@ -145,11 +214,43 @@ button {
     min-height: 42px;
     padding: 10px 12px;
     color: var(--setting-text);
-    background: #fff;
+    background: var(--setting-surface);
     border: 1px solid var(--setting-border);
     border-radius: 8px;
     outline: none;
     transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.password-input-wrap {
+    position: relative;
+}
+
+.settings-form .password-input-wrap input {
+    padding-right: 58px;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    min-height: 30px;
+    padding: 0 4px;
+    transform: translateY(-50%);
+    color: var(--setting-primary-dark);
+    background: transparent;
+    border: 0;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.password-toggle:hover {
+    color: var(--setting-primary);
+}
+
+.password-toggle:focus-visible {
+    outline: 2px solid var(--setting-primary);
+    outline-offset: 2px;
 }
 
 .settings-form input::placeholder {
@@ -167,7 +268,7 @@ button {
 
 .settings-form input[readonly] {
     color: var(--setting-muted);
-    background: #f8f9fc;
+    background: var(--setting-background);
     cursor: default;
 }
 
@@ -238,24 +339,24 @@ button {
 
 .button-danger {
     color: var(--setting-danger);
-    background: #fff;
-    border-color: #f0cfd2;
+    background: var(--setting-surface);
+    border-color: var(--setting-danger-bg);
 }
 
 .button-danger:hover:not(:disabled) {
-    background: #fff4f4;
-    border-color: #eab9be;
+    background: var(--setting-danger-bg);
+    border-color: var(--setting-danger);
 }
 
 .settings-button-secondary {
     color: var(--setting-text);
-    background: #fff;
+    background: var(--setting-surface);
     border-color: var(--setting-border);
 }
 
 .settings-button-secondary:hover:not(:disabled) {
-    background: #f8f9fc;
-    border-color: #d8ddea;
+    background: var(--setting-background);
+    border-color: var(--setting-border);
 }
 
 .button svg {
@@ -295,7 +396,7 @@ button {
     place-items: center;
     padding: 0;
     color: var(--setting-muted);
-    background: #fff;
+    background: var(--setting-surface);
     border: 1px solid var(--setting-border);
     border-radius: 8px;
     font-size: 21px;
@@ -314,7 +415,7 @@ button {
     align-items: center;
     gap: 11px;
     padding: 12px 14px;
-    background: #f8f9fc;
+    background: var(--setting-background);
     border: 1px solid var(--setting-border);
     border-radius: 9px;
 }
@@ -413,7 +514,7 @@ button {
     height: 22px;
     flex: 0 0 38px;
     border-radius: 20px;
-    background: #d9deea;
+    background: var(--setting-switch-off);
     transition: background 0.18s ease;
 }
 
@@ -459,7 +560,7 @@ button {
     gap: 12px;
     margin: 0 0 2px;
     padding: 14px;
-    background: #f8f9fc;
+    background: var(--setting-background);
     border: 1px solid var(--setting-border);
     border-top: 0;
     border-radius: 0 0 9px 9px;
@@ -482,7 +583,7 @@ button {
     min-height: 38px;
     padding: 8px 10px;
     color: var(--setting-text);
-    background: #fff;
+    background: var(--setting-surface);
     border: 1px solid var(--setting-border);
     border-radius: 7px;
     font-size: 12px;

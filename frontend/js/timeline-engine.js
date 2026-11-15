@@ -14,30 +14,6 @@
     const EPS = 1e-9;
     const ONAIR_GAP_HOURS = { 1: 8, 2: 9, 3: 10 };
 
-    /**
-     * Khung giờ làm việc 07:00 - 22:00 (workhours.py - Bản 3)
-     * Đảm bảo hạn nộp nháp, feedback và on-air nằm trong khung giờ làm việc hợp lệ.
-     */
-    function toWorkWindow(date, avoidSunday = false) {
-        if (!date) return date;
-        const d = new Date(date);
-        const h = d.getHours();
-        const m = d.getMinutes();
-        const s = d.getSeconds();
-
-        if (h < 7) {
-            d.setHours(7, 0, 0, 0);
-        } else if (h > 22 || (h === 22 && (m > 0 || s > 0))) {
-            d.setHours(22, 0, 0, 0);
-        }
-
-        if (avoidSunday && d.getDay() === 0) {
-            d.setDate(d.getDate() - 1);
-            d.setHours(22, 0, 0, 0);
-        }
-        return d;
-    }
-
     class TimelineEngine {
         constructor() {
             this.membersCache = null;
@@ -48,20 +24,7 @@
          */
         async fetchMembersWithRoles(client) {
             if (!client) client = window.supabaseClient;
-
-            const fallbackMembers = [
-                { id: "MEM_01", name: "Member 01", roles: ["editor"], load: 2 },
-                { id: "MEM_02", name: "Member 02", roles: ["designer"], load: 10 },
-                { id: "MEM_05", name: "Member 05", roles: ["designer", "photographer"], load: 4 },
-                { id: "MEM_15", name: "Member 15", roles: ["editor", "technician"], load: 3 },
-                { id: "MEM_22", name: "Member 22", roles: ["content_writer"], load: 5 },
-                { id: "MEM_24", name: "Member 24", roles: ["technician"], load: 2 },
-                { id: "MEM_29", name: "Member 29", roles: ["content_writer"], load: 4 },
-                { id: "MEM_40", name: "Member 40", roles: ["designer"], load: 3 },
-                { id: "MEM_41", name: "Member 41", roles: ["designer"], load: 6 }
-            ];
-
-            if (!client) return fallbackMembers;
+            if (!client) return [];
 
             try {
                 const [membersRes, rolesRes] = await Promise.all([
@@ -73,8 +36,6 @@
 
                 const members = membersRes.data || [];
                 const rolesData = rolesRes.data || [];
-
-                if (!members.length) return fallbackMembers;
 
                 const roleMap = new Map();
                 rolesData.forEach(r => {
@@ -91,7 +52,17 @@
                 }));
             } catch (err) {
                 console.warn("[TimelineEngine] Lỗi tải thành viên từ Supabase, dùng mẫu dự phòng:", err);
-                return fallbackMembers;
+                return [
+                    { id: "MEM_01", name: "Member 01", roles: ["editor"], load: 2 },
+                    { id: "MEM_02", name: "Member 02", roles: ["designer"], load: 10 },
+                    { id: "MEM_05", name: "Member 05", roles: ["designer", "photographer"], load: 4 },
+                    { id: "MEM_15", name: "Member 15", roles: ["editor", "technician"], load: 3 },
+                    { id: "MEM_22", name: "Member 22", roles: ["content_writer"], load: 5 },
+                    { id: "MEM_24", name: "Member 24", roles: ["technician"], load: 2 },
+                    { id: "MEM_29", name: "Member 29", roles: ["content_writer"], load: 4 },
+                    { id: "MEM_40", name: "Member 40", roles: ["designer"], load: 3 },
+                    { id: "MEM_41", name: "Member 41", roles: ["designer"], load: 6 }
+                ];
             }
         }
 
@@ -165,82 +136,66 @@
         }
 
         /**
-         * Tính toán Deadline và On-Air dựa trên Ngày bắt đầu giao task (planStart)
-         * - planStart: Ngày bắt đầu giao các task cho thành viên triển khai (mốc xuất phát T0)
-         * - Mọi mốc hạn nộp nháp, hạn feedback, ngày on-air đều diễn ra TỪ NGÀY GIAO TASK TRỞ ĐI
-         * - Áp dụng khung giờ làm việc 07:00 - 22:00 và lead time 48h cho ấn phẩm in ấn (Bản 3)
+         * Tính toán Deadline và On-Air (ngược từ event_start)
          */
         computeDeadlinesAndOnAir(tasks, planStart, eventStart, eventEnd) {
             const PS = new Date(planStart).getTime();
             const ES = new Date(eventStart).getTime();
-            const EE = new Date(eventEnd).getTime();
             const byId = new Map(tasks.map(t => [t.id, t]));
+            const childrenMap = new Map();
+            tasks.forEach(t => childrenMap.set(t.id, []));
+            tasks.forEach(t => {
+                (t.depends_on || []).forEach(d => {
+                    if (byId.has(d)) childrenMap.get(d).push(t);
+                });
+            });
 
             const depRes = this.checkDependency(tasks);
             const topoOrder = depRes.layers.flat();
 
-            // 1. Việc live tại sự kiện (start == 'event' hoặc is_live hoặc category == 'onsite')
+            // 1. Việc live (start == 'event') gán on_air = eventStart
             tasks.forEach(t => {
                 t.flags = t.flags || [];
-                if (t.start === "event" || t.is_live || t.category === "onsite") {
+                if (t.start === "event" || t.is_live) {
                     t.is_live = true;
-                    t.on_air = new Date(Math.max(ES, PS));
+                    t.on_air = new Date(ES);
                     t.deadline = null;
                     t.feedback_due = null;
                     if (!t.flags.includes("LIVE")) t.flags.push("LIVE");
                 }
             });
 
-            // 2. Tính toán tịnh tiến các công việc chuẩn bị từ ngày bắt đầu giao task (planStart)
-            topoOrder.forEach(tid => {
+            // 2. Suy ngược on-air cho các việc trước sự kiện
+            [...topoOrder].reverse().forEach(tid => {
                 const t = byId.get(tid);
                 if (t.is_live) return;
 
-                // Thời điểm sớm nhất có thể bắt đầu làm task (sau khi các task phụ thuộc đã có feedback/deadline)
-                const prereqTimes = (t.depends_on || []).map(d => {
-                    const p = byId.get(d);
-                    return p?.feedback_due?.getTime() || p?.deadline?.getTime() || p?.on_air?.getTime() || PS;
-                });
-                const taskStartMs = prereqTimes.length ? Math.max(...prereqTimes) : PS;
-
-                const complexity = Math.min(Math.max(Number(t.complexity) || 2, 1), 3);
-                const draftWorkDays = complexity >= 3 ? 2 : 1;
-                const isProduct = t.category === "product" || /standee|banner|in |móc khóa|giấy chứng nhận|kỷ yếu/i.test(t.name);
-                const printLeadHours = isProduct ? 48 : 0; // Vật phẩm in ấn: cộng thêm 2 ngày chuẩn bị và in ấn
-
-                // Nếu task đã có on_air cụ thể và on_air đó nằm sau taskStartMs
-                if (t.on_air && new Date(t.on_air).getTime() > taskStartMs) {
-                    const onAirTime = new Date(t.on_air).getTime();
-                    const gapHours = ONAIR_GAP_HOURS[complexity] || 9;
-                    const rawFbMs = onAirTime - (gapHours + printLeadHours) * 3600 * 1000;
-                    t.feedback_due = toWorkWindow(new Date(rawFbMs));
-
-                    const rawDraftMs = onAirTime - (draftWorkDays * 24 + printLeadHours) * 3600 * 1000;
-                    if (rawDraftMs <= taskStartMs) {
-                        t.deadline = toWorkWindow(new Date(taskStartMs + Math.max(t.duration || 4, 8) * 3600 * 1000));
-                        t.flags.push("COMPRESSED");
-                    } else {
-                        t.deadline = toWorkWindow(new Date(rawDraftMs));
-                    }
-                } else {
-                    // Tự động tính tiến dần từ ngày bắt đầu giao task (planStart)
-                    const workDurationMs = Math.max(Number(t.duration) || 4, draftWorkDays * 24) * 3600 * 1000;
-                    const rawDraftMs = taskStartMs + workDurationMs;
-                    t.deadline = toWorkWindow(new Date(rawDraftMs));
-
-                    // Hạn Feedback: sau hạn nộp nháp
-                    const gapHours = ONAIR_GAP_HOURS[complexity] || 9;
-                    const rawFbMs = t.deadline.getTime() + gapHours * 3600 * 1000;
-                    t.feedback_due = toWorkWindow(new Date(rawFbMs));
-
-                    // Ngày On-air: sau feedback (+ lead time 48h nếu là ấn phẩm in ấn)
-                    const rawOnAirMs = t.feedback_due.getTime() + (printLeadHours + 8) * 3600 * 1000;
-                    t.on_air = toWorkWindow(new Date(rawOnAirMs));
+                let onAirTime = t.on_air ? new Date(t.on_air).getTime() : ES;
+                if (!t.on_air) {
+                    const children = childrenMap.get(tid) || [];
+                    children.forEach(c => {
+                        if (c.deadline) {
+                            const cDurMs = (c.duration || 1) * 3600 * 1000;
+                            onAirTime = Math.min(onAirTime, new Date(c.deadline).getTime() - cDurMs);
+                        }
+                    });
+                    t.on_air = new Date(onAirTime);
                     if (!t.flags.includes("ON_AIR_AUTO")) t.flags.push("ON_AIR_AUTO");
                 }
 
-                if (t.start === "creation" && !t.flags.includes("START_NOW")) {
-                    t.flags.push("START_NOW");
+                // 3. Tính hạn nộp nháp (draft deadline) và feedback
+                const complexity = Math.min(Math.max(Number(t.complexity) || 2, 1), 3);
+                const draftDaysBefore = complexity >= 3 ? 2 : 1;
+                const draftMs = onAirTime - draftDaysBefore * 24 * 3600 * 1000;
+                t.deadline = new Date(draftMs);
+
+                const gapHours = ONAIR_GAP_HOURS[complexity] || 9;
+                t.feedback_due = new Date(onAirTime - gapHours * 3600 * 1000);
+
+                if (draftMs <= PS) {
+                    if (!t.flags.includes("INFEASIBLE")) t.flags.push("INFEASIBLE");
+                } else if ((draftMs - PS) / 3600000 < (t.duration || 1)) {
+                    if (!t.flags.includes("COMPRESSED")) t.flags.push("COMPRESSED");
                 }
             });
         }
@@ -402,47 +357,6 @@
         }
 
         /**
-         * Xử lý trùng giờ (conflicts.py - Bản 3):
-         * Quét các task của CÙNG MỘT NGƯỜI có khung giờ (ES, EF) trùng nhau.
-         * Nếu trùng, tự động chuyển người đó sang vị trí Backup nếu có người dự phòng phù hợp.
-         */
-        resolveConflicts(tasks, cpm) {
-            const schedule = cpm.schedule || {};
-            const grouped = new Map();
-            const notes = [];
-
-            tasks.forEach(t => {
-                if (!t.assignee || !schedule[t.id]) return;
-                const s = schedule[t.id];
-                const esKey = Math.round(s.ES * 10) / 10;
-                const efKey = Math.round(s.EF * 10) / 10;
-                const key = `${t.assignee}_${esKey}_${efKey}`;
-                if (!grouped.has(key)) grouped.set(key, []);
-                grouped.get(key).push(t);
-            });
-
-            grouped.forEach((taskList) => {
-                if (taskList.length > 1) {
-                    for (let i = 1; i < taskList.length; i++) {
-                        const conflictTask = taskList[i];
-                        if (conflictTask.backup && conflictTask.backup !== conflictTask.assignee) {
-                            const prevAssigneeName = conflictTask.assignee_name;
-                            conflictTask.assignee = conflictTask.backup;
-                            conflictTask.assignee_name = conflictTask.backup_name;
-                            conflictTask.flags = conflictTask.flags || [];
-                            if (!conflictTask.flags.includes("CONFLICT_RESOLVED")) {
-                                conflictTask.flags.push("CONFLICT_RESOLVED");
-                            }
-                            notes.push(`Task ${conflictTask.id} (${conflictTask.name}): chuyển sang người dự phòng ${conflictTask.backup_name} để tránh trùng giờ với ${taskList[0].id} (${prevAssigneeName})`);
-                        }
-                    }
-                }
-            });
-
-            return notes;
-        }
-
-        /**
          * Chạy trọn vẹn thuật toán lập kế hoạch
          */
         async planTimeline(eventData, rawTasks) {
@@ -453,26 +367,14 @@
             const client = window.supabaseClient;
             const members = await this.fetchMembersWithRoles(client);
 
-            // 1. Ngày bắt đầu giao các task (plan_start):
-            // Chính là ngày bắt đầu sự kiện / bắt đầu giao việc mà người dùng cung cấp khi AI hỏi
-            const rawPlanStart = eventData.plan_start || eventData.start_date || eventData.event_start;
-            const planStart = rawPlanStart ? new Date(rawPlanStart) : new Date();
-
-            // 2. Ngày kết thúc sự kiện (event_end):
-            const rawEventEnd = eventData.event_end || eventData.end_date;
-            const eventEnd = rawEventEnd ? new Date(rawEventEnd) : new Date(planStart.getTime() + 7 * 86400000);
-
-            // 3. Ngày diễn ra sự kiện chính / offline (event_start):
-            // Nếu có sự kiện offline riêng biệt thì dùng event_start, nếu không thì dùng eventEnd
-            const eventStart = (eventData.event_start && eventData.plan_start && eventData.event_start !== eventData.plan_start)
-                ? new Date(eventData.event_start)
-                : eventEnd;
+            const planStart = eventData.plan_start || new Date();
+            const eventStart = new Date(eventData.event_start || (Date.now() + 7 * 86400000));
+            const eventEnd = new Date(eventData.event_end || (eventStart.getTime() + 12 * 3600000));
 
             // Chuẩn hóa danh sách task
             const tasks = rawTasks.map((t, idx) => ({
                 id: t.id || `T_${idx + 1}`,
                 name: t.name || t.task_title || `Công việc ${idx + 1}`,
-                category: t.category || (/standee|banner|móc khóa|in /i.test(t.name) ? "product" : (t.start === "event" || t.is_live ? "onsite" : "onpage")),
                 duration: Number(t.duration) || (t.duration?.endsWith?.("d") ? parseFloat(t.duration) * 24 : 4),
                 effort: t.effort ? Number(t.effort) : null,
                 roles_required: Array.isArray(t.roles) ? t.roles : (t.roles ? String(t.roles).split(/[;,]/).map(s => s.trim()) : []),
@@ -493,7 +395,7 @@
                 };
             }
 
-            // 2. Tính On-Air & Deadlines (kèm khung giờ làm việc 07:00-22:00 Bản 3)
+            // 2. Tính On-Air & Deadlines
             this.computeDeadlinesAndOnAir(tasks, planStart, eventStart, eventEnd);
 
             // 3. Phân công Greedy
@@ -501,9 +403,6 @@
 
             // 4. Tính toán CPM Timeline
             const cpm = this.computeCPM(tasks, planStart, eventStart);
-
-            // 5. Xử lý trùng lịch (conflicts.py - Bản 3)
-            const conflictNotes = this.resolveConflicts(tasks, cpm);
 
             return {
                 ok: true,
@@ -515,7 +414,6 @@
                 },
                 tasks,
                 cpm,
-                conflictNotes,
                 members
             };
         }
@@ -529,7 +427,11 @@
                 throw new Error("Không tìm thấy kết nối Supabase. Vui lòng kiểm tra lại cấu hình.");
             }
 
-            const { event, tasks, members } = plan;
+            const { event, tasks } = plan;
+            const { data: { user }, error: userError } = await client.auth.getUser();
+            if (userError) throw userError;
+            if (!user) throw new Error("Vui lòng đăng nhập để lưu sự kiện.");
+            const workspace = await window.ensurePersonalWorkspace(user);
 
             // 1. Tìm mã Event ID kế tiếp
             let targetEventId = event.event_id;
@@ -549,38 +451,20 @@
             }
 
             const onAirDates = tasks.map(t => t.on_air ? t.on_air.toISOString().split("T")[0] : null).filter(Boolean);
-            const firstOnAir = onAirDates.length ? onAirDates.sort()[0] : new Date(event.plan_start || event.event_start).toISOString().split("T")[0];
-            const lastOnAir = onAirDates.length ? onAirDates.sort().slice(-1)[0] : new Date(event.event_end || event.event_start).toISOString().split("T")[0];
+            const firstOnAir = onAirDates.length ? onAirDates.sort()[0] : new Date(event.event_start).toISOString().split("T")[0];
+            const lastOnAir = onAirDates.length ? onAirDates.sort().slice(-1)[0] : new Date(event.event_end).toISOString().split("T")[0];
 
             // 2. Chèn / cập nhật bảng events
-            let wsId = window.appUser?.workspaceId || null;
-            if (!wsId && client) {
-                try {
-                    const authUser = (await client.auth.getSession())?.data?.session?.user;
-                    if (authUser) {
-                        const { data: tm } = await client
-                            .from("team_members")
-                            .select("workspace_id")
-                            .eq("user_id", authUser.id)
-                            .maybeSingle();
-                        if (tm?.workspace_id) {
-                            wsId = tm.workspace_id;
-                            if (window.appUser) window.appUser.workspaceId = wsId;
-                        }
-                    }
-                } catch(e) {}
-            }
             const eventPayload = {
                 event_id: targetEventId,
-                workspace_id: wsId,
-                status: "draft",
                 event_label: event.event_label || `Sự kiện ${targetEventId}`,
                 event_category: event.event_category || "event",
                 category_note: event.category_note || event.description || "Lập kế hoạch tự động bởi AI Assistant",
                 n_tasks: tasks.length,
                 first_on_air_date: firstOnAir,
                 last_on_air_date: lastOnAir,
-                is_completed: false
+                workspace_id: workspace.workspace_id,
+                status: event.status || "draft"
             };
 
             const { error: eventError } = await client
@@ -591,11 +475,10 @@
                 console.warn("[TimelineEngine] Không thể lưu bảng events (có thể do quyền RLS):", eventError);
             }
 
-            // 3. Tìm số task_no cao nhất hiện có (bỏ qua null để tránh lỗi sắp xếp)
+            // 3. Tìm số task_no cao nhất hiện có
             const { data: latestTask } = await client
                 .from("tasks")
                 .select("task_no")
-                .not("task_no", "is", null)
                 .order("task_no", { ascending: false })
                 .limit(1);
 
@@ -607,17 +490,10 @@
             // 4. Lưu từng task vào bảng tasks
             const taskInserts = [];
             const assignmentInserts = [];
-
-            const formatLocalParts = (dateObj) => {
-                if (!dateObj) return { date: null, time: null, iso: null };
-                const d = new Date(dateObj);
-                const pad = (n) => String(n).padStart(2, "0");
-                return {
-                    date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
-                    time: `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`,
-                    iso: d.toISOString()
-                };
-            };
+            const taskIdByReference = new Map(tasks.map((task, index) => [
+                String(task.id),
+                `T${String(nextTaskNo + index).padStart(3, "0")}`
+            ]));
 
             tasks.forEach((t, i) => {
                 const currentNo = nextTaskNo + i;
@@ -625,46 +501,27 @@
                 t.db_task_id = taskId;
                 t.db_task_no = currentNo;
 
-                const onAir = formatLocalParts(t.on_air);
-                const deadline = formatLocalParts(t.deadline);
+                const onAirIso = t.on_air ? t.on_air.toISOString() : null;
+                const deadlineIso = t.deadline ? t.deadline.toISOString() : null;
 
-                const onAirIso = onAir.iso;
-                const deadlineIso = deadline.iso;
-                const onAirDate = onAir.date;
-                const onAirTime = onAir.time;
-                const deadlineDate = deadline.date || onAirDate;
-                const deadlineTime = deadline.time || onAirTime;
+                const onAirDate = onAirIso ? onAirIso.split("T")[0] : null;
+                const onAirTime = onAirIso ? onAirIso.split("T")[1].slice(0, 8) : null;
+                const deadlineDate = deadlineIso ? deadlineIso.split("T")[0] : onAirDate;
+                const deadlineTime = deadlineIso ? deadlineIso.split("T")[1].slice(0, 8) : onAirTime;
 
-                const DB_ROLE_MAP = {
-                    content: "content_writer",
-                    content_writer: "content_writer",
-                    design: "designer",
-                    designer: "designer",
-                    photo: "photographer",
-                    photographer: "photographer",
-                    video: "editor",
-                    editor: "editor",
-                    tech: "technician",
-                    technician: "technician"
-                };
-                const rawRole = (t.roles_required && t.roles_required[0]) || "";
-                const memberObj = Array.isArray(members) ? members.find(m => m.id === t.assignee) : null;
-                const fallbackRole = (memberObj?.roles && memberObj.roles[0]) || "content_writer";
-                const dbRole = DB_ROLE_MAP[rawRole.toLowerCase()] || DB_ROLE_MAP[fallbackRole.toLowerCase()] || "content_writer";
-
+                const roleName = (t.roles_required && t.roles_required[0]) || "general";
                 let taskType = "Product";
-                if (dbRole.includes("content")) taskType = "OnPage";
-                else if (dbRole.includes("photo") || dbRole.includes("video") || dbRole.includes("editor")) taskType = "Media";
+                if (roleName.includes("content")) taskType = "OnPage";
+                else if (roleName.includes("photo") || roleName.includes("video") || roleName.includes("editor")) taskType = "Media";
 
                 taskInserts.push({
                     task_id: taskId,
                     task_no: currentNo,
                     event_id: targetEventId,
-                    workspace_id: wsId,
                     task_title: t.name,
                     task_type: taskType,
                     submission_label: `${i + 1}. ${t.name}`,
-                    description: `Độ phức tạp: ${t.complexity || 2}/3. Thời lượng: ${t.duration}h. Phụ thuộc: ${(t.depends_on || []).join(", ") || "Không"}.`,
+                    description: `Độ phức tạp: ${t.complexity || 2}/3. Thời lượng: ${t.duration}h. Phụ thuộc: ${(t.depends_on || []).map(id => taskIdByReference.get(String(id)) || id).join(", ") || "Không"}.`,
                     on_air_date: onAirDate,
                     on_air_time: onAirTime,
                     on_air_at: onAirIso,
@@ -673,14 +530,14 @@
                     package_deadline_at: deadlineIso,
                     is_cancelled: false,
                     post_done: false,
-                    status: "not_started",
+                    status: "todo",
                     progress: 0
                 });
 
                 if (t.assignee) {
                     assignmentInserts.push({
                         task_id: taskId,
-                        role: dbRole,
+                        role: roleName,
                         member_id: t.assignee,
                         assignment_state: "assigned",
                         is_done: false
@@ -713,4 +570,3 @@
 
     window.TimelineEngine = new TimelineEngine();
 })();
-

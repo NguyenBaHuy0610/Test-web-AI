@@ -107,6 +107,18 @@ svg {
 
 .calendar-navigation { display: flex; align-items: center; gap: 8px; }
 
+.calendar-bottom-navigation {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin: 6px 12px 10px 0;
+}
+
+.calendar-bottom-navigation .calendar-nav-btn {
+    width: 40px;
+    padding: 0;
+}
+
 .calendar-date-picker {
     min-height: 36px;
     display: inline-flex;
@@ -234,6 +246,51 @@ svg {
 .calendar-personal-filter svg { width: 15px; height: 15px; }
 .calendar-personal-filter:hover,
 .calendar-personal-filter[aria-pressed="true"] { color: var(--primary-dark); background: var(--primary-light); }
+
+.calendar-data-filters {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: -2px 0 14px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+}
+
+.calendar-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 175px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.calendar-filter-field select,
+.calendar-filter-field input {
+    min-height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text-primary);
+    font: inherit;
+}
+
+.calendar-filter-field select:focus,
+.calendar-filter-field input:focus {
+    outline: 2px solid rgba(91, 111, 225, .18);
+    border-color: var(--primary);
+}
+
+.calendar-custom-date-range {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
 
 /* 7. CALENDAR WORKSPACE */
 .calendar-workspace {
@@ -474,7 +531,7 @@ svg {
 .gantt-task-column { position: sticky; left: 0; z-index: 3; background: var(--surface); border-right: 1px solid var(--border); }
 .gantt-timeline-column { min-width: 0; }
 .gantt-header-row { display: grid; width: 100%; grid-template-columns: 480px minmax(840px, 1fr); min-height: 78px; background: var(--surface-secondary); border-bottom: 1px solid var(--border); }
-.gantt-header-labels { position: sticky; left: 0; z-index: 4; display: grid; width: 480px; min-width: 480px; grid-template-columns: minmax(0, 175px) 110px 75px 85px; align-items: center; padding: 0 10px; gap: 6px; background: var(--surface-secondary); color: var(--text-muted); font-size: 12px; }
+.gantt-header-labels { position: sticky; left: 0; z-index: 6; display: grid; width: 480px; min-width: 480px; grid-template-columns: minmax(0, 175px) 110px 75px 85px; align-items: center; padding: 0 10px; gap: 6px; background: var(--surface-secondary); color: var(--text-muted); font-size: 12px; }
 .gantt-timeline-area { display: grid; grid-template-rows: 30px 47px; min-width: 0; }
 .gantt-period-heading { display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 13px; font-weight: 600; }
 .gantt-timeline-header { position: relative; display: grid; width: 100%; min-width: 0; grid-template-columns: repeat(var(--gantt-columns, 14), minmax(0, 1fr)); }
@@ -485,7 +542,7 @@ svg {
 .gantt-timeline-header > div:last-child { border-right: 1px solid var(--border); }
 .gantt-row { display: grid; width: 100%; grid-template-columns: 480px minmax(840px, 1fr); min-height: 64px; border-bottom: 1px solid var(--border); }
 .gantt-row:hover { background: #FAFBFF; }
-.gantt-task-info { position: sticky; left: 0; z-index: 4; display: grid; width: 480px; min-width: 480px; grid-template-columns: minmax(0, 175px) 110px 75px 85px; align-items: center; gap: 6px; padding: 8px 10px; background: var(--surface); border-right: 1px solid var(--border); }
+.gantt-task-info { position: sticky; left: 0; z-index: 6; display: grid; width: 480px; min-width: 480px; grid-template-columns: minmax(0, 175px) 110px 75px 85px; align-items: center; gap: 6px; padding: 8px 10px; background: var(--surface); border-right: 1px solid var(--border); }
 .gantt-task-name { min-width: 0; color: var(--text-primary); font-size: 14px; font-weight: 700; line-height: 1.4; }
 .gantt-task-subtitle { display: block; margin-top: 4px; color: var(--text-muted); font-size: 12px; font-weight: 400; }
 .gantt-task-group, .gantt-task-date { min-width: 0; color: var(--text-secondary); font-size: 12px; overflow-wrap: anywhere; }
@@ -675,6 +732,9 @@ svg {
     .calendar-view-tabs { width: 100%; }
     .calendar-view-tab { flex: 1; padding: 0 7px; font-size: 11px; }
     .calendar-personal-filter { align-self: flex-end; }
+    .calendar-data-filters { align-items: stretch; }
+    .calendar-filter-field { flex: 1 1 160px; min-width: 0; }
+    .calendar-custom-date-range { flex: 1 1 100%; }
     .calendar-panel-header { align-items: flex-start; flex-direction: column; }
     .gantt-toolbar { width: 100%; flex-wrap: wrap; }
     .calendar-workspace { gap: 10px; }

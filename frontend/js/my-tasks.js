@@ -9,9 +9,14 @@ const state = {
     db: window.supabaseClient || null,
     memberId: null,
     tasks: [],
+    allTasks: [],
+    memberContacts: new Map(),
     filteredTasks: [],
     selectedTask: null,
+    detailHistory: [],
     status: "all",
+    overdueOnly: false,
+    isTeamLeader: false,
     keyword: "",
     group: "",
     page: 1
@@ -27,7 +32,13 @@ const el = {
     detailModal: document.getElementById("taskDetailModal"),
     detailContent: document.getElementById("taskDetailContent"),
     progressModal: document.getElementById("updateProgressModal"),
-    progressForm: document.getElementById("updateProgressForm")
+    progressForm: document.getElementById("updateProgressForm"),
+    upcomingAlert: document.getElementById("upcomingTaskAlert"),
+    upcomingAlertSummary: document.getElementById("upcomingTaskAlertSummary"),
+    upcomingAlertList: document.getElementById("upcomingTaskAlertList"),
+    teamUpcomingAlert: document.getElementById("teamUpcomingTaskAlert"),
+    teamUpcomingAlertCount: document.getElementById("teamUpcomingTaskAlertCount"),
+    teamUpcomingAlertList: document.getElementById("teamUpcomingTaskAlertList")
 };
 
 function escapeHTML(value = "") {
@@ -50,16 +61,180 @@ function formatRoleLabel(role = "") {
         .replace(/\b\w/g, character => character.toUpperCase());
 }
 
+function getOverdueDays(task, now = new Date()) {
+    if (task.status === "completed" || task.overallStatus === "completed" ||
+        task.isCancelled || !task.deadline) return 0;
+
+    const deadlineValue = String(task.deadline);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(deadlineValue)) {
+        const [year, month, day] = deadlineValue.split("-").map(Number);
+        const deadlineDay = new Date(Date.UTC(year, month - 1, day));
+        if (deadlineDay.getUTCFullYear() !== year ||
+            deadlineDay.getUTCMonth() !== month - 1 ||
+            deadlineDay.getUTCDate() !== day) return 0;
+        const dueDate = Date.UTC(year, month - 1, day);
+        const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+        const daysLate = Math.floor((today - dueDate) / 86400000);
+        return daysLate > 0 ? daysLate : 0;
+    }
+
+    const deadline = new Date(deadlineValue);
+    if (Number.isNaN(deadline.getTime()) || deadline >= now) return 0;
+    return Math.max(1, Math.ceil((now - deadline) / 86400000));
+}
+
+function getUpcomingDays(task, now = new Date()) {
+    if (task.status === "completed" || task.overallStatus === "completed" ||
+        task.isCancelled || !task.deadline) return null;
+
+    const deadlineValue = String(task.deadline);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(deadlineValue)) {
+        const [year, month, day] = deadlineValue.split("-").map(Number);
+        const dueDate = Date.UTC(year, month - 1, day);
+        const due = new Date(dueDate);
+        if (due.getUTCFullYear() !== year ||
+            due.getUTCMonth() !== month - 1 ||
+            due.getUTCDate() !== day) return null;
+        const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+        const daysUntil = Math.floor((dueDate - today) / 86400000);
+        return daysUntil >= 0 && daysUntil <= 3 ? daysUntil : null;
+    }
+
+    const deadline = new Date(deadlineValue);
+    if (Number.isNaN(deadline.getTime()) || deadline <= now) return null;
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dueDay = new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate());
+    const daysUntil = Math.floor((dueDay - today) / 86400000);
+    return daysUntil >= 0 && daysUntil <= 3 ? daysUntil : null;
+}
+
+function renderUpcomingTaskAlert() {
+    if (!el.upcomingAlert || !el.upcomingAlertList || !el.upcomingAlertSummary) return;
+
+    const upcomingTasks = state.tasks
+        .map(task => ({ task, daysUntil: getUpcomingDays(task) }))
+        .filter(item => item.daysUntil !== null)
+        .sort((a, b) => a.daysUntil - b.daysUntil ||
+            new Date(a.task.deadline) - new Date(b.task.deadline));
+
+    el.upcomingAlert.hidden = !state.isTeamLeader || upcomingTasks.length === 0;
+    if (!state.isTeamLeader || !upcomingTasks.length) return;
+
+    el.upcomingAlertSummary.textContent =
+        `Có ${upcomingTasks.length} công việc đến hạn trong 3 ngày tới (tính cả hôm nay).`;
+    el.upcomingAlertList.innerHTML = upcomingTasks.map(({ task, daysUntil }) => {
+        const dueLabel = daysUntil === 0
+            ? "Đến hạn hôm nay"
+            : daysUntil === 1
+                ? "Đến hạn ngày mai"
+                : `Còn ${daysUntil} ngày`;
+        return `
+            <button type="button" class="upcoming-task-alert-item"
+                    data-open-task="${escapeHTML(task.id)}">
+                <span class="upcoming-task-alert-info">
+                    <strong>${escapeHTML(task.title || "Chưa có tiêu đề")}</strong>
+                    <small>${escapeHTML(task.group || "Chưa phân nhóm")}</small>
+                </span>
+                <span class="upcoming-task-alert-deadline">
+                    <strong>${dueLabel}</strong>
+                    <small>${escapeHTML(formatDate(task.deadline))}</small>
+                </span>
+            </button>
+        `;
+    }).join("");
+
+    refreshIcons();
+}
+
+function renderTeamUpcomingTaskAlert() {
+    if (!el.teamUpcomingAlert || !el.teamUpcomingAlertList) return;
+
+    el.teamUpcomingAlert.hidden = !state.isTeamLeader && !state.memberId;
+    if (!state.isTeamLeader && !state.memberId) return;
+
+    const tasksForAccount = state.isTeamLeader
+        ? state.allTasks
+        : state.tasks;
+    const upcomingTasks = tasksForAccount
+        .filter(task => !task.isCancelled &&
+            task.assignments.some(assignment => state.isTeamLeader
+                ? assignment.member_id
+                : String(assignment.member_id) === String(state.memberId)))
+        .map(task => ({
+            task,
+            daysUntil: getUpcomingDays({
+                ...task,
+                status: state.isTeamLeader
+                    ? task.overallStatus || task.status
+                    : task.status
+            })
+        }))
+        .filter(item => item.daysUntil !== null)
+        .sort((a, b) => a.daysUntil - b.daysUntil ||
+            new Date(a.task.deadline) - new Date(b.task.deadline));
+
+    el.teamUpcomingAlertCount.textContent = String(upcomingTasks.length);
+    if (!upcomingTasks.length) {
+        el.teamUpcomingAlertList.innerHTML =
+            '<p class="team-deadline-empty">Chưa có công việc sắp đến hạn.</p>';
+        return;
+    }
+
+    el.teamUpcomingAlertList.innerHTML = upcomingTasks.map(({ task }) => {
+        const assignmentsForAccount = state.isTeamLeader
+            ? task.assignments
+            : task.assignments.filter(assignment =>
+                String(assignment.member_id) === String(state.memberId));
+        const groups = [...new Set(assignmentsForAccount
+            .map(assignment => assignment.role)
+            .filter(Boolean)
+            .map(formatRoleLabel))];
+        const members = [...new Set(assignmentsForAccount
+            .filter(assignment => assignment.member_id)
+            .map(assignment => state.memberContacts.get(String(assignment.member_id))?.name)
+            .filter(Boolean))];
+
+        return `
+            <button type="button" class="team-deadline-item"
+                    data-open-task="${escapeHTML(task.id)}">
+                <span class="team-deadline-task-info">
+                    <strong>${escapeHTML(task.title || "Chưa có tiêu đề")}</strong>
+                    <small>${escapeHTML([...groups, ...members].join(" · ") || "Chưa phân công")}</small>
+                </span>
+                <span class="team-deadline-task-due">
+                    <strong>${escapeHTML(formatDate(task.deadline))}</strong>
+                    <small>${escapeHTML(statusLabel(state.isTeamLeader
+                        ? task.overallStatus || task.status
+                        : task.status))}</small>
+                </span>
+            </button>
+        `;
+    }).join("");
+
+    refreshIcons();
+}
+
 function normalizeTask(task, assignments, attachments) {
+    const ownAssignments = assignments.filter(assignment =>
+        String(assignment.member_id) === String(state.memberId)
+    );
     const roles = [...new Set(
-        assignments.map(assignment => assignment.role).filter(Boolean)
+        ownAssignments.map(assignment => assignment.role).filter(Boolean)
     )];
-    const statuses = assignments.map(assignmentStatus);
-    const status = statuses.every(value => value === "completed")
+    const statuses = ownAssignments.map(assignmentStatus);
+    const overallStatuses = assignments.map(assignmentStatus);
+    const status = statuses.length && statuses.every(value => value === "completed")
         ? "completed"
         : statuses.includes("in_progress")
             ? "in_progress"
             : statuses.includes("pending_review")
+                ? "pending_review"
+                : "not_started";
+    const overallStatus = overallStatuses.length && overallStatuses.every(value => value === "completed")
+        ? "completed"
+        : overallStatuses.includes("in_progress")
+            ? "in_progress"
+            : overallStatuses.includes("pending_review")
                 ? "pending_review"
                 : "not_started";
     const deadline = task.package_deadline_at ||
@@ -67,6 +242,9 @@ function normalizeTask(task, assignments, attachments) {
 
     return {
         id: task.task_id,
+        taskNo: task.task_no,
+        eventId: task.event_id,
+        submissionLabel: task.submission_label || "",
         title: task.task_title || task.submission_label || task.task_id,
         group: roles.map(formatRoleLabel).join(", "),
         groupRoles: roles,
@@ -74,12 +252,45 @@ function normalizeTask(task, assignments, attachments) {
         deadline,
         createdAt: "",
         priority: "",
+        isCancelled: task.is_cancelled === true,
         status,
+        overallStatus,
         description: task.description || "",
-        progress: status === "completed" ? 100 : 0,
+        dependencies: [],
         attachments,
         assignments
     };
+}
+
+function dependencyReferences(description = "") {
+    const match = String(description).match(/Phụ thuộc:\s*([^.\n]*)/i);
+    if (!match || !match[1].trim() || /^không$/i.test(match[1].trim())) return [];
+    return match[1].split(/[;,|]/).map(value => value.trim()).filter(Boolean);
+}
+
+function normalizedTaskReference(value) {
+    const reference = String(value).trim().toLocaleLowerCase("vi");
+    const numbered = reference.match(/^([a-z_-]*)0*(\d+)$/i);
+    return numbered ? `${numbered[1]}${Number(numbered[2])}` : reference;
+}
+
+function resolveTaskDependencies(tasks) {
+    tasks.forEach(task => {
+        const byReference = new Map();
+        tasks.filter(candidate => String(candidate.eventId) === String(task.eventId))
+            .forEach(candidate => {
+                const ordinal = candidate.submissionLabel.match(/^(\d+)\./)?.[1];
+                [candidate.id, candidate.taskNo,
+                    candidate.taskNo != null ? `T${candidate.taskNo}` : "",
+                    ordinal ? `T${ordinal}` : ""]
+                    .filter(Boolean)
+                    .forEach(reference => byReference.set(normalizedTaskReference(reference), candidate));
+            });
+        task.dependencies = dependencyReferences(task.description).map(reference => ({
+            reference,
+            task: byReference.get(normalizedTaskReference(reference)) || null
+        }));
+    });
 }
 
 function assignmentStatus(assignment = {}) {
@@ -161,12 +372,16 @@ async function loadMyTasks() {
             } else {
                 const { data: membership, error: membershipError } = await state.db
                     .from("team_members")
-                    .select("member_id")
+                    .select("member_id, account_role")
                     .eq("user_id", user.id)
                     .maybeSingle();
 
                 if (membershipError) throw membershipError;
 
+                const accountRole = String(membership?.account_role || user.app_metadata?.role || "")
+                    .trim()
+                    .toLocaleLowerCase("vi");
+                state.isTeamLeader = ["leader", "team_leader", "trưởng nhóm"].includes(accountRole);
                 state.memberId = membership?.member_id ||
                     user.user_metadata?.member_id ||
                     user.app_metadata?.member_id ||
@@ -174,8 +389,9 @@ async function loadMyTasks() {
             }
         }
 
-        if (!state.memberId) {
+        if (!state.memberId && !state.isTeamLeader) {
             state.tasks = [];
+            state.allTasks = [];
             updateStatistics(null);
             applyFilters();
             updateOverallProgress(null);
@@ -183,18 +399,26 @@ async function loadMyTasks() {
             return;
         }
 
-        const [assignmentsResult, eventsResult] = await Promise.all([
+        const [assignmentsResult, eventsResult, membersResult] = await Promise.all([
             state.db
                 .from("task_assignments")
-                .select("task_id, role, assignment_state, member_id, is_done")
-                .eq("member_id", state.memberId),
+                .select("task_id, role, assignment_state, member_id, is_done"),
             state.db
                 .from("events")
-                .select("event_id, is_completed")
+                .select("event_id, is_completed"),
+            state.db
+                .from("members")
+                .select("member_id, member_label, email")
         ]);
 
         if (assignmentsResult.error) throw assignmentsResult.error;
         if (eventsResult.error) throw eventsResult.error;
+        if (membersResult.error) throw membersResult.error;
+
+        state.memberContacts = new Map((membersResult.data || []).map(member => [
+            String(member.member_id),
+            { name: member.member_label || String(member.member_id), email: member.email || "" }
+        ]));
 
         const activeEventIds = new Set(
             (eventsResult.data || [])
@@ -210,9 +434,14 @@ async function loadMyTasks() {
             assignmentsByTask.set(assignment.task_id, taskAssignments);
         });
 
-        const taskIds = [...assignmentsByTask.keys()];
-        if (!taskIds.length) {
+        const taskIds = [...assignmentsByTask.entries()]
+            .filter(([, assignments]) => state.memberId && assignments.some(assignment =>
+                String(assignment.member_id) === String(state.memberId)
+            ))
+            .map(([taskId]) => taskId);
+        if (!taskIds.length && !state.isTeamLeader) {
             state.tasks = [];
+            state.allTasks = [];
             state.page = 1;
             updateStatistics(null);
             applyFilters();
@@ -228,17 +457,19 @@ async function loadMyTasks() {
                 on_air_at, package_deadline_date, package_deadline_time,
                 package_deadline_at, posted_on_main_page, post_method,
                 is_cancelled, post_done, data_quality_flag
-            `)
-            .in("task_id", taskIds);
+            `);
 
         if (tasksError) throw tasksError;
 
         const activeEventTasks = (tasks || []).filter(task =>
             task.event_id != null && activeEventIds.has(String(task.event_id))
         );
-        const activeTaskIds = activeEventTasks.map(task => task.task_id);
-        if (!activeTaskIds.length) {
+        const activeTasksForMember = activeEventTasks.filter(task =>
+            taskIds.some(taskId => String(taskId) === String(task.task_id))
+        );
+        if (!activeTasksForMember.length && !state.isTeamLeader) {
             state.tasks = [];
+            state.allTasks = [];
             state.page = 1;
             updateStatistics(null);
             applyFilters();
@@ -246,11 +477,14 @@ async function loadMyTasks() {
             return;
         }
 
-        const { data: attachments, error: attachmentsError } = await state.db
-            .from("task_attachments")
-            .select("attachment_id, task_id, file_name, file_url, file_type, file_size, uploaded_by, created_at")
-            .in("task_id", activeTaskIds)
-            .order("created_at", { ascending: false });
+        const attachmentsResult = activeEventTasks.length
+            ? await state.db
+                .from("task_attachments")
+                .select("attachment_id, task_id, file_name, file_url, file_type, file_size, uploaded_by, created_at")
+                .in("task_id", activeEventTasks.map(task => task.task_id))
+                .order("created_at", { ascending: false })
+            : { data: [], error: null };
+        const { data: attachments, error: attachmentsError } = attachmentsResult;
 
         if (attachmentsError) throw attachmentsError;
 
@@ -261,14 +495,15 @@ async function loadMyTasks() {
             attachmentsByTask.set(attachment.task_id, taskAttachments);
         });
 
-        state.tasks = activeEventTasks
-            .filter(task => task.is_cancelled !== true)
-            .filter(task => assignmentsByTask.has(task.task_id))
-            .map(task => normalizeTask(
+        state.allTasks = activeEventTasks.map(task => normalizeTask(
                 task,
-                assignmentsByTask.get(task.task_id),
+                assignmentsByTask.get(task.task_id) || [],
                 attachmentsByTask.get(task.task_id) || []
             ));
+        resolveTaskDependencies(state.allTasks);
+        state.tasks = state.allTasks.filter(task => !task.isCancelled && taskIds.some(taskId =>
+            String(taskId) === String(task.id)
+        ));
 
         state.page = 1;
 
@@ -324,6 +559,12 @@ function updateStatistics(summary) {
 
     document.getElementById("completedCount").textContent =
         counts.completed;
+
+    const overdueCount = state.tasks.filter(task => getOverdueDays(task) > 0).length;
+    document.getElementById("overdueTasksCount").textContent = overdueCount;
+    document.getElementById("overdueTasksTabCount").textContent = overdueCount;
+    renderUpcomingTaskAlert();
+    renderTeamUpcomingTaskAlert();
 }
 
 function updateOverallProgress(summary) {
@@ -370,6 +611,10 @@ function applyFilters() {
             state.status === "all" ||
             task.status === state.status;
 
+        const matchesOverdue =
+            !state.overdueOnly ||
+            getOverdueDays(task) > 0;
+
         const matchesGroup =
             !state.group ||
             task.groupRoles.some(role =>
@@ -378,6 +623,7 @@ function applyFilters() {
 
         return matchesKeyword &&
                matchesStatus &&
+               matchesOverdue &&
                matchesGroup;
     });
 
@@ -417,8 +663,10 @@ function renderTaskTable() {
             </tr>
         `;
     } else {
-        el.tableBody.innerHTML = pageTasks.map(task => `
-            <tr>
+        el.tableBody.innerHTML = pageTasks.map(task => {
+            const overdueDays = getOverdueDays(task);
+            return `
+            <tr class="${overdueDays ? "task-row-overdue" : ""}">
                 <td class="task-name-cell"
                     title="${escapeHTML(task.title)}">
                     ${escapeHTML(task.title || "Chưa có tiêu đề")}
@@ -432,7 +680,14 @@ function renderTaskTable() {
 
                 <td>${escapeHTML(task.assigner || "—")}</td>
 
-                <td>${escapeHTML(formatDate(task.deadline))}</td>
+                <td>
+                    <span class="deadline-cell">
+                        <span>${escapeHTML(formatDate(task.deadline))}</span>
+                        ${overdueDays
+                            ? `<span class="overdue-badge">Trễ hạn · ${overdueDays} ngày</span>`
+                            : ""}
+                    </span>
+                </td>
 
                 <td><span class="priority-chip">Chưa thiết lập</span></td>
 
@@ -451,7 +706,8 @@ function renderTaskTable() {
                     </button>
                 </td>
             </tr>
-        `).join("");
+        `;
+        }).join("");
     }
 
     el.tableInfo.textContent = state.filteredTasks.length
@@ -501,16 +757,26 @@ function closeModal(modal) {
    TASK DETAIL POPUP
 ========================================== */
 
-function openTaskDetail(taskId) {
-    const task = state.tasks.find(item => String(item.id) === String(taskId));
+function openTaskDetail(taskId, navigation = "root") {
+    const task = state.allTasks.find(item => String(item.id) === String(taskId));
     if (!task) return;
 
+    if (navigation === "dependency" && state.selectedTask) {
+        state.detailHistory.push(state.selectedTask.id);
+    } else if (navigation === "root") {
+        state.detailHistory = [];
+    }
     state.selectedTask = task;
     renderTaskDetail(task);
     openModal(el.detailModal);
 }
 
-function renderSavedAttachments(attachments) {
+function goBackToPreviousTask() {
+    const previousTaskId = state.detailHistory.pop();
+    if (previousTaskId) openTaskDetail(previousTaskId, "back");
+}
+
+function renderSavedAttachments(attachments, canDelete = true) {
     return attachments.length
         ? attachments.map(attachment => {
             const safeUrl = getSafeSubmissionUrl(attachment.file_url);
@@ -520,13 +786,13 @@ function renderSavedAttachments(attachments) {
             const item = safeUrl
                 ? `<a class="attachment-item" href="${escapeHTML(safeUrl)}" target="_blank" rel="noopener noreferrer">${content}</a>`
                 : `<div class="attachment-item">${content}</div>`;
-            const deleteButton = String(attachment.uploaded_by) === String(state.memberId)
+            const deleteButton = canDelete && String(attachment.uploaded_by) === String(state.memberId)
                 ? `<button type="button" class="attachment-delete" data-delete-attachment="${escapeHTML(attachment.attachment_id)}" aria-label="Xóa ${escapeHTML(attachment.file_name || "link bài làm")}">Xóa</button>`
                 : "";
 
             return `<div class="attachment-row">${item}${deleteButton}</div>`;
         }).join("")
-        : '<p class="attachment-empty">Chưa có link bài làm được lưu.</p>';
+        : '<p class="attachment-empty">Chưa có sản phẩm hoặc link nào được lưu cho công việc.</p>';
 }
 
 /* ==========================================
@@ -534,23 +800,75 @@ function renderSavedAttachments(attachments) {
 ========================================== */
 
 function renderTaskDetail(task) {
+    const hasAssignment = task.assignments.some(assignment =>
+        String(assignment.member_id) === String(state.memberId)
+    );
+    const detailStatus = hasAssignment ? task.status : task.overallStatus;
+    const overdueDays = getOverdueDays(task);
     const roles = task.assignments
         .map(assignment => assignment.role)
         .filter(Boolean)
         .map(formatRoleLabel);
     const attachments = task.attachments || [];
-    const savedAttachments = renderSavedAttachments(attachments);
+    const dependencies = task.dependencies?.length
+        ? task.dependencies.map(dependency => {
+            const prerequisite = dependency.task;
+            const title = prerequisite?.title || dependency.reference;
+            const status = prerequisite?.overallStatus;
+            const statusClass = prerequisite?.isCancelled ? "cancelled" : status || "not_started";
+            const statusText = prerequisite?.isCancelled
+                ? "Đã hủy"
+                : prerequisite ? statusLabel(status) : "Không tìm thấy";
+            return `<li class="dependency-item">
+                <button type="button" class="dependency-task" data-open-dependency="${escapeHTML(prerequisite?.id || "")}" ${prerequisite ? "" : "disabled"}>
+                    <strong>${escapeHTML(title)}</strong>
+                    <small>${escapeHTML(prerequisite?.id || "Không tìm thấy công việc")}</small>
+                    <span class="dependency-open-label">Xem chi tiết</span>
+                </button>
+                <span class="status-chip status-${escapeHTML(statusClass)}">
+                    ${escapeHTML(statusText)}
+                </span>
+            </li>`;
+        }).join("")
+        : '<p class="attachment-empty">Công việc này không phụ thuộc công việc nào khác.</p>';
+    const assigneeContacts = task.assignments.length
+        ? task.assignments.map(assignment => {
+            const contact = state.memberContacts.get(String(assignment.member_id));
+            const name = contact?.name || "Chưa xác định thành viên";
+            const email = contact?.email;
+            return `<li class="assignee-contact">
+                <span class="assignee-contact-info">
+                    <strong>${escapeHTML(name)}</strong>
+                    <small>${escapeHTML(assignment.role ? formatRoleLabel(assignment.role) : "Thành viên")}</small>
+                </span>
+                <span class="assignee-contact-status status-chip status-${escapeHTML(assignmentStatus(assignment))}">
+                    ${escapeHTML(statusLabel(assignmentStatus(assignment)))}
+                </span>
+                ${email
+                    ? `<a href="mailto:${escapeHTML(email)}">${escapeHTML(email)}</a>`
+                    : '<span class="contact-unavailable">Chưa có email</span>'}
+            </li>`;
+        }).join("")
+        : '<p class="attachment-empty">Công việc chưa có phân công.</p>';
+    const savedAttachments = renderSavedAttachments(attachments, hasAssignment);
 
     el.detailContent.innerHTML = `
+        <button type="button" class="detail-back-button" data-back-task ${state.detailHistory.length ? "" : "hidden"}>
+            <i data-lucide="arrow-left"></i>
+            <span>Quay lại công việc trước</span>
+        </button>
         <section class="detail-section">
             <h1 class="detail-task-title">
                 ${escapeHTML(task.title || "Chưa có tiêu đề")}
             </h1>
 
             <div class="task-status-priority">
-                <span class="status-chip status-${escapeHTML(task.status)}">
-                    ${escapeHTML(statusLabel(task.status))}
+                <span class="status-chip status-${escapeHTML(detailStatus)}">
+                    ${escapeHTML(statusLabel(detailStatus))}
                 </span>
+                ${overdueDays
+                    ? `<span class="overdue-badge detail-overdue-badge">Trễ hạn · ${overdueDays} ngày</span>`
+                    : ""}
             </div>
         </section>
 
@@ -560,6 +878,21 @@ function renderTaskDetail(task) {
             <p class="detail-description">
                 ${escapeHTML(task.description || "Chưa có mô tả.")}
             </p>
+        </section>
+
+        <section class="detail-section">
+            <h3>Công việc cần hoàn thành trước</h3>
+            <ul class="dependency-list">${dependencies}</ul>
+        </section>
+
+        <section class="detail-section">
+            <h3>Người phụ trách và liên hệ</h3>
+            <ul class="assignee-contact-list">${assigneeContacts}</ul>
+        </section>
+
+        <section class="detail-section task-products-section">
+            <h3>Sản phẩm của công việc</h3>
+            <div class="submission-link-saved attachment-list" id="submissionLinkSaved">${savedAttachments}</div>
         </section>
 
         <section class="detail-section">
@@ -588,7 +921,7 @@ function renderTaskDetail(task) {
             </p>
         </section>
 
-        <section class="detail-section submission-section">
+        ${hasAssignment ? `<section class="detail-section submission-section">
             <h3>Link bài đã làm</h3>
             <form id="submissionLinkForm" class="submission-link-form">
                 <label for="submissionNameInput">Tên link (không bắt buộc)</label>
@@ -605,21 +938,21 @@ function renderTaskDetail(task) {
                 <p class="submission-link-message" id="submissionLinkMessage"
                    role="status" aria-live="polite"></p>
                 <p class="submission-link-hint">Link được lưu trong danh sách tệp đính kèm của công việc; hệ thống không tải tệp lên.</p>
-                <div class="submission-link-saved attachment-list" id="submissionLinkSaved">${savedAttachments}</div>
             </form>
-        </section>
+        </section>` : ""}
     `;
 
-    document.getElementById("taskStatusInput").value =
-        task.status;
+    const statusInput = document.getElementById("taskStatusInput");
+    if (statusInput) statusInput.value = detailStatus;
     document.getElementById("progressTaskTitle").textContent = task.title;
     document.getElementById("progressTaskGroup").textContent = task.group || "—";
 
     document.getElementById("startTaskBtn").hidden =
-        task.status !== "not_started";
+        !hasAssignment || task.status !== "not_started";
 
     document.getElementById("completeTaskBtn").hidden =
-        task.status === "completed";
+        !hasAssignment || task.status === "completed";
+    document.querySelector(".task-detail-footer").hidden = !hasAssignment;
 
     refreshIcons();
 }
@@ -702,7 +1035,7 @@ async function saveTaskSubmissionLink(event) {
         if (!data) throw new Error("Supabase không trả về thông tin link vừa lưu.");
 
         task.attachments = [data, ...(task.attachments || [])];
-        form.querySelector("#submissionLinkSaved").innerHTML =
+        document.getElementById("submissionLinkSaved").innerHTML =
             renderSavedAttachments(task.attachments);
         refreshIcons();
         input.value = "";
@@ -898,6 +1231,18 @@ async function updateTaskStatus(status) {
 ========================================== */
 
 document.addEventListener("click", event => {
+    const backButton = event.target.closest("[data-back-task]");
+    if (backButton) {
+        goBackToPreviousTask();
+        return;
+    }
+
+    const dependencyButton = event.target.closest("[data-open-dependency]");
+    if (dependencyButton) {
+        openTaskDetail(dependencyButton.dataset.openDependency, "dependency");
+        return;
+    }
+
     const deleteAttachmentButton = event.target.closest("[data-delete-attachment]");
     if (deleteAttachmentButton) {
         deleteTaskAttachment(
@@ -949,18 +1294,42 @@ document.querySelectorAll(".status-tab").forEach(button => {
 
     button.addEventListener("click", () => {
 
-        document.querySelectorAll(".status-tab")
-            .forEach(tab => tab.classList.remove("active"));
+        if (button.hasAttribute("data-overdue-filter")) {
+            state.overdueOnly = !state.overdueOnly;
+            if (state.overdueOnly) state.status = "all";
+        } else {
+            state.overdueOnly = false;
+            state.status = button.dataset.status;
+        }
 
-        button.classList.add("active");
-
-        state.status = button.dataset.status;
-
+        syncTaskFilterControls();
         state.page = 1;
-
         applyFilters();
     });
 
+});
+
+function syncTaskFilterControls() {
+    document.querySelectorAll(".status-tab").forEach(tab => {
+        const isOverdueTab = tab.hasAttribute("data-overdue-filter");
+        const isActive = isOverdueTab
+            ? state.overdueOnly
+            : !state.overdueOnly && tab.dataset.status === state.status;
+        tab.classList.toggle("active", isActive);
+        if (isOverdueTab) tab.setAttribute("aria-pressed", String(state.overdueOnly));
+    });
+
+    const overdueCard = document.getElementById("overdueTasksCard");
+    overdueCard.classList.toggle("is-active", state.overdueOnly);
+    overdueCard.setAttribute("aria-pressed", String(state.overdueOnly));
+}
+
+document.getElementById("overdueTasksCard")?.addEventListener("click", () => {
+    state.overdueOnly = !state.overdueOnly;
+    if (state.overdueOnly) state.status = "all";
+    syncTaskFilterControls();
+    state.page = 1;
+    applyFilters();
 });
 
 
@@ -998,10 +1367,28 @@ if (filterToggle) {
             document.getElementById("advancedTaskFilters");
 
         panel.hidden = !panel.hidden;
+        filterToggle.setAttribute("aria-expanded", String(!panel.hidden));
 
     });
 
 }
+
+document.addEventListener("click", event => {
+    const panel = document.getElementById("advancedTaskFilters");
+    if (panel && !event.target.closest(".filter-menu-container") && !panel.hidden) {
+        panel.hidden = true;
+        filterToggle?.setAttribute("aria-expanded", "false");
+    }
+});
+
+document.addEventListener("keydown", event => {
+    const panel = document.getElementById("advancedTaskFilters");
+    if (event.key === "Escape" && panel && !panel.hidden) {
+        panel.hidden = true;
+        filterToggle?.setAttribute("aria-expanded", "false");
+        filterToggle?.focus();
+    }
+});
 
 
 document.getElementById("groupFilter")
@@ -1020,6 +1407,9 @@ document.getElementById("resetTaskFilters")
 ?.addEventListener("click", () => {
     state.group = "";
     document.getElementById("groupFilter").value = "";
+    state.overdueOnly = false;
+    state.status = "all";
+    syncTaskFilterControls();
     state.page = 1;
     applyFilters();
 });

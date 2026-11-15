@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Danh sách công việc | AECPT</title>
     <script src="../js/i18n.js"></script>
+    <script src="../js/theme.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,6 +15,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="../styles/sidebar.css">
     <link rel="stylesheet" href="../styles/task-list.css">
+    <link rel="stylesheet" href="../styles/theme.css">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -60,14 +62,57 @@
                     >
                 </div>
 
-                <button type="button"
-                        class="filter-toggle-btn"
-                        id="toggleTaskFilters">
+                <div class="filter-menu-container">
+                    <button type="button"
+                            class="filter-toggle-btn"
+                            id="toggleTaskFilters"
+                            aria-expanded="false"
+                            aria-controls="advancedTaskFilters">
+                        <i data-lucide="sliders-horizontal"></i>
+                        Bộ lọc
+                    </button>
 
-                    <i data-lucide="sliders-horizontal"></i>
-                    Bộ lọc
+                    <div class="advanced-filter-panel"
+                         id="advancedTaskFilters"
+                         hidden>
+                        <div class="filter-panel-section">
+                            <span class="filter-panel-label">Nhóm phụ trách</span>
+                            <div class="group-filter-list" id="groupFilterTabs">
+                                <button type="button" class="group-filter active" data-group="">Tất cả nhóm</button>
+                                <button type="button" class="group-filter" data-group="Edit">Edit</button>
+                                <button type="button" class="group-filter" data-group="Design">Design</button>
+                                <button type="button" class="group-filter" data-group="Content">Content</button>
+                                <button type="button" class="group-filter" data-group="Tech">Tech</button>
+                                <button type="button" class="group-filter" data-group="Photo">Photo</button>
+                            </div>
+                        </div>
 
-                </button>
+                        <div class="filter-panel-section">
+                            <span class="filter-panel-label">Trạng thái</span>
+                            <div class="status-filter-list">
+                                <button type="button" class="status-tab active" data-status="all">Tất cả trạng thái</button>
+                                <button type="button" class="status-tab" data-status="not_started">Chưa bắt đầu</button>
+                                <button type="button" class="status-tab" data-status="in_progress">Đang thực hiện</button>
+                                <button type="button" class="status-tab" data-status="pending_review">Chờ duyệt</button>
+                                <button type="button" class="status-tab" data-status="completed">Đã hoàn thành</button>
+                                <button type="button" class="status-tab overdue-status-tab" id="overdueTasksTab" data-overdue-filter aria-pressed="false">
+                                    Trễ hạn <span id="overdueTasksTabCount">0</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="filter-field">
+                            <label for="memberFilter">Thành viên phụ trách</label>
+                            <select id="memberFilter">
+                                <option value="">Tất cả thành viên</option>
+                            </select>
+                        </div>
+
+                        <button type="button" id="resetTaskFilters" class="reset-filter-btn">
+                            Xóa bộ lọc
+                        </button>
+                    </div>
+                </div>
 
             </div>
 
@@ -137,97 +182,42 @@
 
                 </article>
 
+                <button type="button"
+                        class="summary-card overdue-summary-card"
+                        id="overdueTasksCard"
+                        aria-pressed="false">
+
+                    <span class="summary-card-header">
+                        <span>Trễ hạn</span>
+                        <i data-lucide="triangle-alert"></i>
+                    </span>
+
+                    <strong id="overdueTasksCount">—</strong>
+
+                </button>
+
             </div>
 
         </section>
 
+        <section class="team-deadline-alert"
+                 id="teamDeadlineAlert"
+                 aria-labelledby="teamDeadlineHeading"
+                 hidden>
+            <div class="team-deadline-heading">
+                <span class="team-deadline-icon"><i data-lucide="calendar-clock"></i></span>
+                <div>
+                    <h2 id="teamDeadlineHeading">Công việc nhóm sắp đến hạn</h2>
+                    <p>Công việc chưa hoàn thành có deadline trong hôm nay và 3 ngày tới.</p>
+                </div>
+                <strong class="team-deadline-count" id="teamDeadlineCount">0</strong>
+            </div>
+            <div class="team-deadline-list" id="teamDeadlineList"></div>
+        </section>
 
-        <!-- ==================================
-             GROUP FILTER
-        =================================== -->
 
         <section class="task-filter-section">
-
-            <div class="group-filter-list" id="groupFilterTabs">
-
-                <button type="button"
-                        class="group-filter active"
-                        data-group="">
-                    Tất cả nhóm
-                </button>
-
-                <button type="button"
-                        class="group-filter"
-                        data-group="Edit">
-                    Edit
-                </button>
-
-                <button type="button"
-                        class="group-filter"
-                        data-group="Design">
-                    Design
-                </button>
-
-                <button type="button"
-                        class="group-filter"
-                        data-group="Content">
-                    Content
-                </button>
-
-                <button type="button"
-                        class="group-filter"
-                        data-group="Tech">
-                    Tech
-                </button>
-
-                <button type="button"
-                        class="group-filter"
-                        data-group="Photo">
-                    Photo
-                </button>
-
-            </div>
-
-
-            <!-- Status Filter + Sorting -->
-
             <div class="filter-toolbar">
-
-                <div class="status-filter-list">
-
-                    <button type="button"
-                            class="status-tab active"
-                            data-status="all">
-                        Tất cả trạng thái
-                    </button>
-
-                    <button type="button"
-                            class="status-tab"
-                            data-status="not_started">
-                        Chưa bắt đầu
-                    </button>
-
-                    <button type="button"
-                            class="status-tab"
-                            data-status="in_progress">
-                        Đang thực hiện
-                    </button>
-
-                    <button type="button"
-                            class="status-tab"
-                            data-status="pending_review">
-                        Chờ duyệt
-                    </button>
-
-                    <button type="button"
-                            class="status-tab"
-                            data-status="completed">
-                        Đã hoàn thành
-                    </button>
-
-                </div>
-
-
                 <div class="sort-container">
 
                     <label for="taskSort">
@@ -251,52 +241,6 @@
                 </div>
 
             </div>
-
-
-            <!-- Advanced Filters -->
-
-            <div class="advanced-filter-panel"
-                 id="advancedTaskFilters"
-                 hidden>
-
-                <div class="filter-field">
-
-                    <label for="groupFilter">
-                        Nhóm phụ trách
-                    </label>
-
-                    <select id="groupFilter">
-                        <option value="">Tất cả nhóm</option>
-                        <option value="Edit">Edit</option>
-                        <option value="Design">Design</option>
-                        <option value="Content">Content</option>
-                        <option value="Tech">Tech</option>
-                        <option value="Photo">Photo</option>
-                    </select>
-
-                </div>
-
-                <div class="filter-field">
-
-                    <label for="memberFilter">
-                        Thành viên phụ trách
-                    </label>
-
-                    <select id="memberFilter">
-                        <option value="">Tất cả thành viên</option>
-                    </select>
-
-                </div>
-
-
-                <button type="button"
-                        id="resetTaskFilters"
-                        class="reset-filter-btn">
-                    Xóa bộ lọc
-                </button>
-
-            </div>
-
         </section>
 
 
@@ -602,9 +546,9 @@
      JAVASCRIPT
 =================================== -->
 
-<script src="../js/sidebar.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase.js"></script>
+<script src="../js/sidebar.js"></script>
 <script src="../js/task-list.js"></script>
 
 <script>

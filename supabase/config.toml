@@ -1,0 +1,4 @@
+project_id = "roxgrvqmctdnajiorwcv"
+
+[functions.create-workspace-member]
+verify_jwt = true

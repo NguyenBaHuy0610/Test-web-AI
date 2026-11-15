@@ -3,5 +3,6 @@
 window.APP_CONFIG = window.APP_CONFIG || {
     GROQ_API_KEY: "",
     GROQ_SUPPORT_API_KEY: "",
-    GROQ_SUPPORT_MODEL: "llama-3.3-70b-versatile"
+    GROQ_SUPPORT_MODEL: "llama-3.3-70b-versatile",
+    GEMINI_API_KEY: ""
 };

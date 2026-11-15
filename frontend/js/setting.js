@@ -1,4 +1,14 @@
 document.addEventListener("DOMContentLoaded", async () => {
+    document.querySelectorAll(".password-toggle").forEach((button) => {
+        button.addEventListener("click", () => {
+            const input = document.getElementById(button.dataset.target);
+            const isHidden = input.type === "password";
+            input.type = isHidden ? "text" : "password";
+            button.textContent = isHidden ? "Ẩn" : "Hiện";
+            button.setAttribute("aria-label", isHidden ? "Ẩn mật khẩu" : "Hiện mật khẩu");
+        });
+    });
+
     const client = window.supabaseClient;
     if (!client) {
         showMessage("profileMessage", "Không kết nối được Supabase. Hãy tải lại trang.", "error");
@@ -36,7 +46,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? await window.loadAppUser()
         : null;
     const metadata = user.user_metadata || {};
-    displayNameInput.value = metadata.full_name || metadata.name || appUser?.name || "";
+    displayNameInput.value = appUser?.name || metadata.full_name || metadata.name || "";
     emailInput.value = user.email || "";
 
     profileForm.addEventListener("submit", async (event) => {
@@ -50,19 +60,39 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         setBusy(saveProfileButton, true, "Đang lưu…", "Lưu thay đổi");
-        const { data, error } = await client.auth.updateUser({ data: { full_name: fullName } });
-        setBusy(saveProfileButton, false, "Đang lưu…", "Lưu thay đổi");
-        if (error) {
-            showMessage("profileMessage", `Không lưu được: ${error.message}`, "error");
-            return;
-        }
+        let authNameUpdated = false;
+        try {
+            const { data, error } = await client.auth.updateUser({ data: { full_name: fullName } });
+            if (error) throw error;
 
-        const savedName = data.user?.user_metadata?.full_name || fullName;
-        displayNameInput.value = savedName;
-        showMessage("profileMessage", "Đã cập nhật tên hiển thị.", "success");
-        if (window.appUser) {
-            window.appUser = { ...window.appUser, name: savedName };
-            window.renderAppUser?.(window.appUser);
+            authNameUpdated = true;
+            const savedName = data.user?.user_metadata?.full_name || fullName;
+
+            if (appUser?.memberId) {
+                const { data: updatedMember, error: memberError } = await client
+                    .from("members")
+                    .update({ member_label: savedName })
+                    .eq("member_id", appUser.memberId)
+                    .select("member_id");
+                if (memberError) throw memberError;
+                if (!updatedMember?.length) {
+                    throw new Error("Không có hồ sơ thành viên nào được cập nhật. Kiểm tra quyền RLS.");
+                }
+            }
+
+            displayNameInput.value = savedName;
+            showMessage("profileMessage", "Đã cập nhật tên hiển thị.", "success");
+            if (window.appUser) {
+                window.appUser = { ...window.appUser, name: savedName };
+                window.renderAppUser?.(window.appUser);
+            }
+        } catch (error) {
+            const message = authNameUpdated
+                ? `Tên tài khoản đã đổi nhưng không đồng bộ được hồ sơ thành viên: ${error.message}`
+                : `Không lưu được: ${error.message}`;
+            showMessage("profileMessage", message, "error");
+        } finally {
+            setBusy(saveProfileButton, false, "Đang lưu…", "Lưu thay đổi");
         }
     });
 

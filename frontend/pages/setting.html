@@ -5,11 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cài đặt | AECPT</title>
     <script src="../js/i18n.js"></script>
+    <script src="../js/theme.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../styles/sidebar.css">
     <link rel="stylesheet" href="../styles/setting.css">
+    <link rel="stylesheet" href="../styles/theme.css">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
@@ -24,6 +26,20 @@
         </header>
 
     <div class="settings-layout">
+      <section class="settings-card appearance-settings-card" aria-labelledby="appearanceHeading">
+        <div class="appearance-option">
+          <div class="appearance-option-info">
+            <span class="settings-icon"><i data-lucide="moon"></i></span>
+            <h2 id="appearanceHeading">Chế độ tối</h2>
+          </div>
+          <button class="theme-setting-button" type="button" data-theme-toggle
+                  aria-pressed="false" aria-label="Chế độ tối"
+                  title="Bật hoặc tắt chế độ tối">
+            <span class="theme-switch-thumb" aria-hidden="true"></span>
+          </button>
+        </div>
+      </section>
+
       <section class="settings-card notification-settings-card" aria-labelledby="notification-settings-title">
         <div class="notification-settings-heading">
           <div>
@@ -92,11 +108,20 @@
                 </div>
                 <form id="passwordForm" class="settings-form">
                     <label for="currentPassword">Mật khẩu hiện tại</label>
-                    <input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu hiện tại" required>
+                    <div class="password-input-wrap">
+                        <input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu hiện tại" required>
+                        <button class="password-toggle" type="button" data-target="currentPassword" aria-label="Hiện mật khẩu">Hiện</button>
+                    </div>
                     <label for="newPassword">Mật khẩu mới</label>
-                    <input id="newPassword" name="newPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Ít nhất 8 ký tự" required>
+                    <div class="password-input-wrap">
+                        <input id="newPassword" name="newPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Ít nhất 8 ký tự" required>
+                        <button class="password-toggle" type="button" data-target="newPassword" aria-label="Hiện mật khẩu">Hiện</button>
+                    </div>
                     <label for="confirmPassword">Nhập lại mật khẩu mới</label>
-                    <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Nhập lại mật khẩu" required>
+                    <div class="password-input-wrap">
+                        <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Nhập lại mật khẩu" required>
+                        <button class="password-toggle" type="button" data-target="confirmPassword" aria-label="Hiện mật khẩu">Hiện</button>
+                    </div>
                     <div class="form-actions"><p class="form-message" id="passwordMessage" role="status" aria-live="polite"></p><button class="button button-primary" type="submit" id="changePasswordButton">Cập nhật mật khẩu</button></div>
                 </form>
             </section>
@@ -112,9 +137,9 @@
         </div>
     </main>
 </div>
-<script src="../js/sidebar.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase.js"></script>
+<script src="../js/sidebar.js"></script>
 <script src="../js/setting.js"></script>
 </body>
 </html>

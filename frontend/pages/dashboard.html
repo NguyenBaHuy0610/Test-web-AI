@@ -8,6 +8,7 @@
 
     <title>Trang chủ | AECPT</title>
     <script src="../js/i18n.js"></script>
+    <script src="../js/theme.js"></script>
 
     <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,6 +20,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="../styles/sidebar.css">
     <link rel="stylesheet" href="../styles/dashboard.css">
+    <link rel="stylesheet" href="../styles/theme.css">
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -254,23 +256,26 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <!-- Supabase Connection -->
-    <script src="../js/supabase.js?v=1.1"></script>
+    <script src="../js/supabase.js"></script>
 
     <!-- Shared Sidebar -->
-    <script src="../js/sidebar.js?v=1.1"></script>
+    <script src="../js/sidebar.js"></script>
 
-    <!-- Groq AI Service -->
-    <script src="../config.js?v=1.1"></script>
-    <script src="../js/groq.js?v=1.1"></script>
+    <!-- Groq AI Service (Primary) -->
+    <script src="../config.js"></script>
+    <script src="../js/groq.js"></script>
+
+    <!-- Gemini AI Service (Backup fallback) -->
+    <script src="../js/gemini.js"></script>
 
     <!-- Client-side File Parser (Word, Excel, PDF lazy loaded on demand) -->
-    <script src="../js/file-parser.js?v=1.1"></script>
+    <script src="../js/file-parser.js"></script>
 
     <!-- Timeline Planning Engine (CPM Algorithm) -->
-    <script src="../js/timeline-engine.js?v=1.1"></script>
+    <script src="../js/timeline-engine.js"></script>
 
     <!-- Page Script -->
-    <script src="../js/dashboard.js?v=1.2"></script>
+    <script src="../js/dashboard.js"></script>
 
 </body>
 </html>

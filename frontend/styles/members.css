@@ -455,6 +455,24 @@ button {
     border-bottom: none;
 }
 
+.member-table tbody tr.current-user-member td {
+    background: #FFFCF0;
+    border-top: 2px solid #D4A017;
+    border-bottom: 2px solid #D4A017;
+}
+
+.member-table tbody tr.current-user-member td:first-child {
+    border-left: 2px solid #D4A017;
+}
+
+.member-table tbody tr.current-user-member td:last-child {
+    border-right: 2px solid #D4A017;
+}
+
+.member-table tbody tr.current-user-member:last-child td {
+    border-bottom: 2px solid #D4A017;
+}
+
 /* MEMBER NAME CELL */
 
 .member-name-cell {
@@ -797,6 +815,39 @@ button {
 
 .detail-section {
     margin-bottom: 23px;
+}
+
+.detail-member-actions {
+    display: flex;
+    gap: 9px;
+    margin-top: 18px;
+}
+
+.detail-member-actions > button {
+    flex: 1;
+}
+
+.delete-member-btn {
+    min-width: 95px;
+    height: 38px;
+    padding: 0 15px;
+    border: 1px solid #D92D20;
+    border-radius: 8px;
+    background: #D92D20;
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+.delete-member-btn:hover {
+    border-color: #B42318;
+    background: #B42318;
+}
+
+.delete-member-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
 }
 
 .detail-section h4 {
@@ -1664,4 +1715,24 @@ button {
         padding: 20px 16px;
     }
 
+}
+
+.modal-actions button:disabled {
+    cursor: wait;
+    opacity: .6;
+}
+
+.workspace-invitation-feedback {
+    min-height: 16px;
+    margin: 8px 0;
+    color: var(--text-secondary);
+    font-size: 11px;
+}
+
+.workspace-invitation-feedback.is-error {
+    color: #B42318;
+}
+
+.workspace-invitation-feedback.is-success {
+    color: #067647;
 }

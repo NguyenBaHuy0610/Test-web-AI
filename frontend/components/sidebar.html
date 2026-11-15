@@ -9,10 +9,7 @@
         <span>AECPT</span>
     </div>
 
-    <!-- Tên không gian làm việc -->
-    <p class="workspace-name">
-        KHÔNG GIAN MULTIMEDIA
-    </p>
+    <p class="workspace-name" id="sidebarWorkspaceName">Workspace for Multimedia</p>
 
     <!-- Menu điều hướng -->
     <nav class="sidebar-menu">
@@ -65,6 +62,13 @@
             <span id="userRole"></span>
         </div>
 
+        <button class="notification-bell-button" id="notificationBellButton"
+                type="button" aria-label="Thông báo" aria-controls="notificationPanel"
+                aria-expanded="false">
+            <i data-lucide="bell"></i>
+            <span class="notification-unread-count" id="notificationUnreadCount" hidden>0</span>
+        </button>
+
         <button class="setting-button" title="Cài đặt">
             <i data-lucide="sliders-horizontal"></i>
         </button>
@@ -72,3 +76,115 @@
     </div>
 
 </aside>
+
+<section class="notification-panel" id="notificationPanel"
+         aria-labelledby="notificationPanelTitle" hidden>
+    <header class="notification-panel-header">
+        <h2 id="notificationPanelTitle">Thông báo</h2>
+        <button type="button" id="markAllNotificationsRead">Đánh dấu đã đọc</button>
+    </header>
+    <div class="notification-list" id="notificationList">
+        <p class="notification-list-empty">Đang tải thông báo...</p>
+    </div>
+</section>
+
+<div class="notification-detail-backdrop" id="notificationDetailModal" hidden>
+    <section class="notification-detail-dialog" role="dialog" aria-modal="true"
+             aria-labelledby="notificationDetailTitle">
+        <header>
+            <h2 id="notificationDetailTitle"></h2>
+            <button type="button" id="closeNotificationDetail" aria-label="Đóng">×</button>
+        </header>
+        <p id="notificationDetailMessage"></p>
+        <div class="notification-detail-meta">
+            <span id="notificationDetailPriority"></span>
+            <time id="notificationDetailDate"></time>
+        </div>
+        <footer>
+            <button type="button" class="notification-detail-close-button"
+                    id="dismissNotificationDetail">Đóng</button>
+            <button type="button" class="notification-detail-task-button"
+                    id="openNotificationTask" hidden>Mở công việc</button>
+        </footer>
+    </section>
+</div>
+
+<div class="ace-chatbot-widget" id="aceChatbotWidget">
+    <section class="ace-chatbot-panel" id="aceChatbotPanel"
+             role="dialog" aria-labelledby="aceChatbotTitle" aria-hidden="true" hidden>
+        <header class="ace-chatbot-header">
+            <div class="ace-chatbot-heading">
+                <img class="ace-chatbot-avatar" src="../assets/chatbot_logo-no-background.png"
+                     alt="" aria-hidden="true">
+                <div class="ace-chatbot-heading-copy">
+                    <strong id="aceChatbotTitle">ACE</strong>
+                    <span>AI Companion for Events</span>
+                </div>
+            </div>
+            <div class="ace-chatbot-header-actions">
+                <button class="ace-chatbot-header-button" id="aceChatbotHistoryToggle"
+                        type="button" aria-label="Lịch sử trò chuyện"
+                        aria-controls="aceChatbotHistory" aria-expanded="false"
+                        title="Lịch sử trò chuyện">
+                    <i data-lucide="history"></i>
+                </button>
+                <button class="ace-chatbot-header-button" id="aceChatbotReset"
+                        type="button" aria-label="Bắt đầu lại" title="Bắt đầu lại" disabled>
+                    <i data-lucide="rotate-ccw"></i>
+                </button>
+                <button class="ace-chatbot-header-button" id="aceChatbotMinimize"
+                        type="button" aria-label="Thu nhỏ" title="Thu nhỏ">
+                    <i data-lucide="minus"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="ace-chatbot-messages" id="aceChatbotMessages" aria-live="polite">
+            <div class="ace-chatbot-welcome">
+                <p>
+                    Chào bạn! Mình là <strong>ACE</strong>, viết tắt của
+                    <strong>AI Companion for Events</strong>, giao diện trợ lý đồng hành
+                    cùng bạn khi sử dụng AECPT.
+                </p>
+            </div>
+
+            <div class="ace-chatbot-suggestions" aria-label="Gợi ý câu hỏi">
+                <button type="button" data-prompt="Trang web này làm được gì?">Trang web này làm được gì?</button>
+                <button type="button" data-prompt="Cập nhật công việc sự kiện">Cập nhật công việc sự kiện</button>
+                <button type="button" data-prompt="Hướng dẫn dùng Timeline và quản lý công việc">Hướng dẫn dùng Timeline &amp; quản lý công việc</button>
+                <button type="button" data-prompt="Tôi cần hỗ trợ khác">Tôi cần hỗ trợ khác</button>
+            </div>
+        </div>
+
+        <section class="ace-chatbot-history" id="aceChatbotHistory"
+                 aria-label="Lịch sử trò chuyện" hidden>
+            <h2>Lịch sử trò chuyện</h2>
+            <div class="ace-chatbot-history-empty" id="aceChatbotHistoryEmpty">
+                <span class="ace-chatbot-history-icon"><i data-lucide="messages-square"></i></span>
+                <strong>Chưa có lịch sử chat</strong>
+                <p>Bảng hiện tại chỉ lưu trạng thái chatbot, chưa lưu nội dung hội thoại.</p>
+            </div>
+        </section>
+
+        <p class="ace-chatbot-status-message" id="aceChatbotStatus"
+           role="status" aria-live="polite" hidden></p>
+        <!-- Tích hợp AI tại submit handler của form này trong js/sidebar.js: gửi input qua backend (không để API key ở frontend), rồi hiển thị phản hồi trong #aceChatbotMessages. -->
+        <form class="ace-chatbot-composer" id="aceChatbotForm">
+            <input type="text" id="aceChatbotInput" aria-label="Nhắn tin cho ACE"
+                   placeholder="Nhắn tin cho ACE..." autocomplete="off" disabled>
+            <button type="submit" id="aceChatbotSendButton"
+                    aria-label="Gửi tin nhắn" title="Gửi tin nhắn" disabled>
+                <i data-lucide="send"></i>
+            </button>
+        </form>
+    </section>
+
+    <button class="ace-chatbot-launcher" id="aceChatbotLauncher"
+            type="button" aria-label="Mở ACE, AI Companion for Events"
+            aria-controls="aceChatbotPanel" aria-expanded="false">
+        <span class="ace-chatbot-launcher-avatar">
+            <img src="../assets/chatbot_logo-no-background.png" alt="" aria-hidden="true">
+        </span>
+        <span>ACE</span>
+    </button>
+</div>

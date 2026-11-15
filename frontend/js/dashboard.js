@@ -281,14 +281,14 @@ function renderTimelinePlanCard(plan) {
         const draftStr = t.deadline ? new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(t.deadline)) : "—";
         const fbStr = t.feedback_due ? new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(t.feedback_due)) : "—";
         const badge = isCrit ? `<span class="critical-badge">Đường găng</span>` : `<span class="normal-badge">Dư ${cpm.schedule[t.id]?.slack || 0}h</span>`;
-        const primary = t.assignee_name || "Chưa phân công";
-        const backup = t.backup_name ? `<br><small style="color:#64748b;">(Dự phòng: ${t.backup_name})</small>` : "";
+        const primary = escapeHTML(t.assignee_name || "Chưa phân công");
+        const backup = t.backup_name ? `<br><small style="color:#64748b;">(Dự phòng: ${escapeHTML(t.backup_name)})</small>` : "";
         const conflictBadge = (t.flags && t.flags.includes("CONFLICT_RESOLVED")) ? `<br><span style="display:inline-block; margin-top:2px; font-size:10px; background:#fef08a; color:#854d0e; padding:1px 5px; border-radius:3px;">⚡ Đổi sang dự phòng</span>` : "";
 
         return `<tr>
-            <td><strong>${t.id}</strong></td>
+            <td><strong>${escapeHTML(t.id)}</strong></td>
             <td><strong>${escapeHTML(t.name)}</strong></td>
-            <td>${t.duration}h</td>
+            <td>${escapeHTML(t.duration)}h</td>
             <td>${primary}${backup}${conflictBadge}</td>
             <td>${onAirStr}</td>
             <td>${draftStr}</td>
@@ -601,13 +601,35 @@ async function sendMessage(message) {
             state.conversationId = "conv_" + Date.now();
         }
 
-        if (!window.GroqService) {
-            throw new Error("Dịch vụ Groq AI chưa sẵn sàng. Vui lòng kiểm tra file js/groq.js");
-        }
-
-        // Gọi Groq AI với sự kiện đang được chọn + tệp đính kèm
+        let result = null;
         const targetEventId = state.activeEvent?.event_id || null;
-        const result = await window.GroqService.sendMessage(content, historyBeforeCurrent, targetEventId, attachmentsToSend);
+
+        // Ưu tiên 1: Gọi Groq AI như hiện tại
+        try {
+            if (!window.GroqService) {
+                throw new Error("Dịch vụ Groq AI chưa sẵn sàng.");
+            }
+            result = await window.GroqService.sendMessage(content, historyBeforeCurrent, targetEventId, attachmentsToSend);
+        } catch (groqError) {
+            console.warn("[AI Provider] Groq gặp lỗi hoặc hết hạn mức/token, chuyển sang Gemini dự phòng:", groqError);
+
+            // Ưu tiên 2: Fallback sang Google Gemini Flash khi Groq gặp lỗi / hết quota / không có key
+            if (window.GeminiService) {
+                try {
+                    const geminiResult = await window.GeminiService.sendMessage(content, historyBeforeCurrent, targetEventId);
+                    result = {
+                        reply: (geminiResult.reply || "") + "\n\n> 💡 *(Phản hồi được tạo tự động bởi Google Gemini Flash dự phòng do Groq AI bận hoặc hết hạn ngạch/token)*",
+                        event: geminiResult.event || null,
+                        model: geminiResult.model || "gemini-flash"
+                    };
+                } catch (geminiError) {
+                    console.error("[AI Provider] Cả Groq và Gemini đều thất bại:", geminiError);
+                    throw new Error(`Groq AI: ${groqError.message} | Gemini Backup: ${geminiError.message}`);
+                }
+            } else {
+                throw groqError;
+            }
+        }
 
         // Xóa hiệu ứng đang nhập
         document.getElementById("typingIndicator")?.remove();
@@ -1135,20 +1157,45 @@ function initializeKeyConfigButton() {
     const btn = DOM.keyConfigBtn;
     if (!btn) return;
     const statusText = DOM.keyStatusText;
-    const aiService = window.GroqService;
+    const groqService = window.GroqService;
+    const geminiService = window.GeminiService;
 
     function updateLabel() {
         if (!statusText) return;
-        const hasKey = aiService?.hasApiKey();
-        statusText.textContent = hasKey ? "Đổi Groq Key" : "Nhập Groq Key";
+        const hasGroq = groqService?.hasApiKey();
+        const hasGemini = geminiService?.hasApiKey();
+        if (hasGroq && hasGemini) {
+            statusText.textContent = "AI Keys (Groq & Gemini)";
+        } else if (hasGroq) {
+            statusText.textContent = "Groq OK (Thêm Gemini)";
+        } else if (hasGemini) {
+            statusText.textContent = "Gemini OK (Thêm Groq)";
+        } else {
+            statusText.textContent = "Cấu hình AI Key";
+        }
     }
 
     updateLabel();
 
     btn?.addEventListener("click", async () => {
-        const key = await aiService?.requestApiKey();
-        if (key) {
-            alert("Đã cập nhật Groq API Key thành công!");
+        const choice = prompt(
+            "Chọn AI Provider muốn cấu hình API Key:\n" +
+            "1: Groq API Key (Chính - Llama 3.3 / Qwen 2.5)\n" +
+            "2: Google Gemini API Key (Dự phòng khi Groq hết token)\n\n" +
+            "Nhập 1 hoặc 2:",
+            "1"
+        );
+
+        if (choice === "2") {
+            const key = await geminiService?.requestApiKey();
+            if (key) {
+                alert("Đã cập nhật Google Gemini API Key thành công!");
+            }
+        } else if (choice === "1") {
+            const key = await groqService?.requestApiKey();
+            if (key) {
+                alert("Đã cập nhật Groq API Key thành công!");
+            }
         }
         updateLabel();
     });

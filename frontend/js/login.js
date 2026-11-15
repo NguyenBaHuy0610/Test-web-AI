@@ -86,6 +86,34 @@ function validatePassword(password) {
     return password.trim().length > 0;
 }
 
+function getAuthErrorMessage(error, action) {
+    const message = String(error?.message || "").toLowerCase();
+    const code = String(error?.code || "").toLowerCase();
+
+    if (code === "invalid_credentials" || message.includes("invalid login credentials")) {
+        return "Email hoặc mật khẩu không chính xác. Vui lòng thử lại.";
+    }
+    if (message.includes("user already registered") || message.includes("already been registered")) {
+        return "Email này đã được đăng ký. Vui lòng đăng nhập hoặc dùng email khác.";
+    }
+    if (message.includes("email not confirmed")) {
+        return "Email chưa được xác nhận. Vui lòng kiểm tra hộp thư của bạn.";
+    }
+    if (message.includes("password") &&
+        (message.includes("weak") || message.includes("least"))) {
+        return "Mật khẩu chưa đủ mạnh. Vui lòng chọn mật khẩu dài và an toàn hơn.";
+    }
+    if (message.includes("rate limit") || message.includes("too many requests")) {
+        return "Bạn thao tác quá nhiều lần. Vui lòng chờ một lúc rồi thử lại.";
+    }
+
+    return {
+        login: "Không thể đăng nhập lúc này. Vui lòng thử lại.",
+        signup: "Không thể tạo tài khoản lúc này. Vui lòng thử lại.",
+        recovery: "Không thể gửi email khôi phục lúc này. Vui lòng thử lại."
+    }[action] || "Đã xảy ra lỗi. Vui lòng thử lại.";
+}
+
 
 function clearErrors() {
 
@@ -117,9 +145,19 @@ loginForm.addEventListener("submit", async function (event) {
   const email = emailInput.value.trim();
   const password = passwordInput.value;
 
-  if (!email || !password) {
-    formFeedback.textContent = "Nhập email và mật khẩu nhé.";
-    formFeedback.style.color = "#dc2626";
+  if (!email) {
+    emailError.textContent = "Vui lòng nhập email.";
+    emailInput.focus();
+    return;
+  }
+  if (!validateEmail(email)) {
+    emailError.textContent = "Email không đúng định dạng. Ví dụ: ten@congty.com.";
+    emailInput.focus();
+    return;
+  }
+  if (!validatePassword(password)) {
+    passwordError.textContent = "Vui lòng nhập mật khẩu.";
+    passwordInput.focus();
     return;
   }
 
@@ -140,7 +178,7 @@ loginForm.addEventListener("submit", async function (event) {
     window.location.href = "dashboard.html";
   } catch (error) {
     console.error("Đăng nhập thất bại:", error);
-    formFeedback.textContent = "Đăng nhập thất bại: " + error.message;
+    formFeedback.textContent = getAuthErrorMessage(error, "login");
     formFeedback.style.color = "#dc2626";
   } finally {
     submitButton.disabled = false;
@@ -162,7 +200,24 @@ signupForm.addEventListener("submit", async event => {
         return;
     }
 
-    if (!email || password.length < 8) return;
+    if (!email) {
+        signupFeedback.style.color = "#dc2626";
+        signupFeedback.textContent = "Vui lòng nhập email.";
+        signupEmailInput.focus();
+        return;
+    }
+    if (!validateEmail(email)) {
+        signupFeedback.style.color = "#dc2626";
+        signupFeedback.textContent = "Email không đúng định dạng. Ví dụ: ten@congty.com.";
+        signupEmailInput.focus();
+        return;
+    }
+    if (password.length < 8) {
+        signupFeedback.style.color = "#dc2626";
+        signupFeedback.textContent = "Mật khẩu cần có ít nhất 8 ký tự.";
+        signupPasswordInput.focus();
+        return;
+    }
 
     signupSubmit.disabled = true;
     signupSubmit.textContent = "Đang tạo tài khoản...";
@@ -172,7 +227,10 @@ signupForm.addEventListener("submit", async event => {
             email,
             password,
             options: {
-                data: { full_name: fullName }
+                data: {
+                    full_name: fullName,
+                    signup_source: "self_signup"
+                }
             }
         });
 
@@ -180,13 +238,13 @@ signupForm.addEventListener("submit", async event => {
 
         signupFeedback.style.color = "#15803d";
         signupFeedback.textContent = data.session
-            ? "Tạo tài khoản thành công! Hệ thống đã tự động tạo không gian làm việc mới và gán bạn làm Trưởng nhóm (Leader). Hãy đăng nhập để bắt đầu."
-            : "Đã tạo tài khoản! Hệ thống đã tạo không gian làm việc mới cho bạn. Hãy kiểm tra email để xác nhận (nếu có yêu cầu) rồi đăng nhập để bắt đầu.";
+            ? "Tạo tài khoản thành công. Tài khoản cần được trưởng nhóm liên kết với thành viên trước khi dùng workspace."
+            : "Đã tạo tài khoản. Hãy kiểm tra email để xác nhận, sau đó liên hệ trưởng nhóm để được liên kết với workspace.";
         signupForm.reset();
     } catch (error) {
         console.error("Đăng ký thất bại:", error);
         signupFeedback.style.color = "#dc2626";
-        signupFeedback.textContent = "Đăng ký thất bại: " + error.message;
+        signupFeedback.textContent = getAuthErrorMessage(error, "signup");
     } finally {
         signupSubmit.disabled = false;
         signupSubmit.textContent = "Tạo tài khoản";
@@ -194,12 +252,45 @@ signupForm.addEventListener("submit", async event => {
 });
 
 
-forgotPassword.addEventListener("click", function () {
+forgotPassword.addEventListener("click", async function () {
+    const email = emailInput.value.trim();
+    emailError.textContent = "";
+    formFeedback.textContent = "";
 
-    alert(
-        "Vui lòng liên hệ quản trị viên của ban Multimedia để được hỗ trợ đặt lại mật khẩu."
-    );
+    if (!email || !validateEmail(email)) {
+        emailError.textContent = "Nhập email hợp lệ để nhận liên kết đặt lại mật khẩu.";
+        emailInput.focus();
+        return;
+    }
 
+    const client = window.supabaseClient;
+    if (!client?.auth) {
+        formFeedback.textContent = "Không kết nối được Supabase. Vui lòng tải lại trang.";
+        formFeedback.style.color = "#dc2626";
+        return;
+    }
+
+    forgotPassword.disabled = true;
+    forgotPassword.textContent = "Đang gửi...";
+    formFeedback.textContent = "Đang gửi email khôi phục...";
+    formFeedback.style.color = "#555";
+
+    try {
+        const redirectTo = new URL("reset-password.html", window.location.href).toString();
+        const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo });
+        if (error) throw error;
+
+        formFeedback.textContent =
+            "Đã tiếp nhận yêu cầu. Nếu email có tài khoản, bạn sẽ nhận được liên kết đặt lại mật khẩu; nếu chưa đăng ký, sẽ không có email được gửi. Vì lý do bảo mật, hệ thống không xác nhận email có tài khoản hay không.";
+        formFeedback.style.color = "#15803d";
+    } catch (error) {
+        console.error("Không thể gửi email đặt lại mật khẩu:", error);
+        formFeedback.textContent = getAuthErrorMessage(error, "recovery");
+        formFeedback.style.color = "#dc2626";
+    } finally {
+        forgotPassword.disabled = false;
+        forgotPassword.textContent = "Quên mật khẩu?";
+    }
 });
 
 

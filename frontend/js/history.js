@@ -13,9 +13,11 @@
         events: [],
         tasksByEvent: new Map(),
         memberNames: new Map(),
+        memberEmails: new Map(),
         filtersByEvent: new Map(),
         year: "all",
-        query: ""
+        query: "",
+        selectedTask: null
     };
 
     const dom = {
@@ -143,6 +145,122 @@
         }
     }
 
+    function safeProductUrl(value) {
+        try {
+            const url = new URL(String(value || ""), window.location.href);
+            return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+        } catch {
+            return "";
+        }
+    }
+
+    function ensureTaskDetailModal() {
+        if (document.getElementById("historyTaskDetailModal")) return;
+        const modal = document.createElement("div");
+        modal.id = "historyTaskDetailModal";
+        modal.className = "history-task-modal";
+        modal.hidden = true;
+        modal.innerHTML = `
+            <section class="history-task-dialog" role="dialog" aria-modal="true" aria-labelledby="historyTaskDetailTitle">
+                <header class="history-task-dialog-header">
+                    <div>
+                        <h2 id="historyTaskDetailTitle">Chi tiết công việc</h2>
+                        <p id="historyTaskEventName"></p>
+                    </div>
+                    <button type="button" class="history-task-close" data-close-history-task aria-label="Đóng">
+                        <i data-lucide="x"></i>
+                    </button>
+                </header>
+                <div class="history-task-dialog-content" id="historyTaskDetailContent"></div>
+            </section>`;
+        document.body.appendChild(modal);
+    }
+
+    function showTaskDetail(eventId, taskId) {
+        const task = (state.tasksByEvent.get(String(eventId)) || [])
+            .find(item => String(item.task_id) === String(taskId));
+        if (!task) return;
+
+        const event = state.events.find(item => String(item.event_id) === String(eventId));
+        const modal = document.getElementById("historyTaskDetailModal");
+        const detailTitle = document.getElementById("historyTaskDetailTitle");
+        const eventName = document.getElementById("historyTaskEventName");
+        const detailContent = document.getElementById("historyTaskDetailContent");
+        const assignments = (task.assignments || []).filter(assignment => assignment.member_id);
+        const attachments = task.attachments || [];
+        const products = attachments.length
+            ? `<div class="history-product-list">${attachments.map(attachment => {
+                const url = safeProductUrl(attachment.file_url);
+                const name = attachment.file_name || "Sản phẩm công việc";
+                const created = attachment.created_at ? new Date(attachment.created_at) : null;
+                const addedAt = created && !Number.isNaN(created.getTime())
+                    ? new Intl.DateTimeFormat(window.AppI18n?.locale || "vi-VN", {
+                        dateStyle: "medium",
+                        timeStyle: "short"
+                    }).format(created)
+                    : "Chưa rõ ngày cập nhật";
+                const content = `<i data-lucide="${url ? "external-link" : "file-warning"}"></i>
+                    <span><strong>${escapeHTML(name)}</strong><small>${escapeHTML(addedAt)}</small></span>`;
+                return url
+                    ? `<a class="history-product-link" href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer">${content}</a>`
+                    : `<div class="history-product-link is-invalid">${content}</div>`;
+            }).join("")}</div>`
+            : '<p class="history-detail-empty">Chưa có sản phẩm hoặc link nào được lưu cho công việc.</p>';
+        const assignees = assignments.length
+            ? `<ul class="history-assignee-list">${assignments.map(assignment => {
+                const memberId = String(assignment.member_id);
+                const name = state.memberNames.get(memberId) || memberId;
+                const email = state.memberEmails.get(memberId);
+                const status = assignmentStatus(assignment);
+                return `<li>
+                    <span><strong>${escapeHTML(name)}</strong><small>${escapeHTML(assignment.role || "Thành viên")}</small></span>
+                    <span class="task-status ${status}">${escapeHTML(STATUS_LABELS[status] || "Chưa bắt đầu")}</span>
+                    ${email
+                        ? `<a href="mailto:${escapeHTML(email)}">${escapeHTML(email)}</a>`
+                        : '<small class="history-detail-empty">Chưa có email</small>'}
+                </li>`;
+            }).join("")}</ul>`
+            : '<p class="history-detail-empty">Công việc chưa được phân công.</p>';
+        const status = taskStatus(task);
+
+        detailTitle.textContent = task.task_title || task.submission_label || task.task_id;
+        eventName.textContent = event?.event_label || `Sự kiện ${eventId}`;
+        detailContent.innerHTML = `
+            <div class="history-task-status-row">
+                <span class="task-status ${status}">${escapeHTML(taskStatusLabel(task))}</span>
+                <span>Mã công việc: ${escapeHTML(task.task_id)}</span>
+            </div>
+            <section class="history-task-detail-section">
+                <h3>Mô tả công việc</h3>
+                <p>${escapeHTML(task.description || "Chưa có mô tả.")}</p>
+            </section>
+            <section class="history-task-detail-section">
+                <h3>Người phụ trách</h3>
+                ${assignees}
+            </section>
+            <section class="history-task-detail-section">
+                <h3>Hạn chót</h3>
+                <p>${taskDeadline(task)}</p>
+            </section>
+            <section class="history-task-detail-section">
+                <h3>Sản phẩm của công việc</h3>
+                ${products}
+            </section>`;
+        modal.hidden = false;
+        state.selectedTask = task;
+        document.body.classList.add("history-task-modal-open");
+        createIcons();
+        modal.querySelector("[data-close-history-task]")?.focus();
+    }
+
+    function closeTaskDetail() {
+        const modal = document.getElementById("historyTaskDetailModal");
+        if (!modal) return;
+        modal.hidden = true;
+        state.selectedTask = null;
+        document.body.classList.remove("history-task-modal-open");
+    }
+
     function getEventFilter(eventId) {
         const id = String(eventId);
         if (!state.filtersByEvent.has(id)) {
@@ -196,7 +314,7 @@
                             const links = attachments.filter(attachment => attachment.file_url);
                             return `
                                 <tr>
-                                    <td>${escapeHTML(task.task_title || task.submission_label || task.task_id || "Chưa có dữ liệu")}</td>
+                                    <td><button class="history-task-open" type="button" data-task-detail="${escapeHTML(task.task_id)}" data-event-id="${escapeHTML(eventId)}">${escapeHTML(task.task_title || task.submission_label || task.task_id || "Chưa có dữ liệu")}<small>Xem chi tiết</small></button></td>
                                     <td><span class="task-status ${status}">${escapeHTML(taskStatusLabel(task))}</span></td>
                                     <td>${uniqueMembers.length ? uniqueMembers.map(escapeHTML).join(", ") : "Chưa phân công"}</td>
                                     <td>${taskDeadline(task)}</td>
@@ -304,12 +422,12 @@
                 "event_id, event_label, event_category, category_note, n_tasks, first_on_air_date, last_on_air_date, is_completed"
             ),
             state.db.from("tasks").select(
-                "task_id, event_id, task_no, task_title, submission_label, package_deadline_date, package_deadline_time, is_cancelled"
+                "task_id, event_id, task_no, task_title, submission_label, description, package_deadline_date, package_deadline_time, is_cancelled"
             ),
             state.db.from("task_assignments").select(
                 "task_id, role, assignment_state, member_id, is_done"
             ),
-            state.db.from("members").select("member_id, member_label")
+            state.db.from("members").select("member_id, member_label, email")
         ]);
 
         for (const result of [eventsResult, tasksResult, assignmentsResult, membersResult]) {
@@ -331,6 +449,9 @@
         state.events = eventsResult.data || [];
         state.memberNames = new Map((membersResult.data || []).map(member =>
             [String(member.member_id), member.member_label || String(member.member_id)]
+        ));
+        state.memberEmails = new Map((membersResult.data || []).map(member =>
+            [String(member.member_id), member.email || ""]
         ));
 
         const assignmentsByTask = new Map();
@@ -360,6 +481,22 @@
 
         renderYearOptions();
         render();
+
+        const requestedTaskId = new URLSearchParams(window.location.search).get("taskId");
+        if (requestedTaskId) {
+            const matchingEntry = [...state.tasksByEvent.entries()].find(([, eventTasks]) =>
+                eventTasks.some(task => String(task.task_id) === requestedTaskId)
+            );
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.delete("taskId");
+            window.history.replaceState(null, "", currentUrl.href);
+
+            if (matchingEntry) {
+                showTaskDetail(matchingEntry[0], requestedTaskId);
+            } else {
+                alert("Không tìm thấy công việc trong lịch sử sự kiện.");
+            }
+        }
     }
 
     function updateTaskDetails(eventId) {
@@ -415,6 +552,12 @@
     });
 
     dom.list.addEventListener("click", event => {
+        const taskButton = event.target.closest("[data-task-detail]");
+        if (taskButton) {
+            showTaskDetail(taskButton.dataset.eventId, taskButton.dataset.taskDetail);
+            return;
+        }
+
         const statusButton = event.target.closest("[data-status-filter]");
         if (statusButton) {
             const filter = getEventFilter(statusButton.dataset.statusFilter);
@@ -436,6 +579,16 @@
                 .find(item => item.querySelector(`[data-task-table="${CSS.escape(id)}"]`));
             if (entry) entry.open = true;
         }
+    });
+
+    ensureTaskDetailModal();
+    document.getElementById("historyTaskDetailModal").addEventListener("click", event => {
+        if (event.target.closest("[data-close-history-task]") || event.target.id === "historyTaskDetailModal") {
+            closeTaskDetail();
+        }
+    });
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && state.selectedTask) closeTaskDetail();
     });
 
     loadData().catch(error => {

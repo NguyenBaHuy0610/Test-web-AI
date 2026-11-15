@@ -6,7 +6,8 @@ module.exports = (req, res) => {
   const config = {
     GROQ_API_KEY: process.env.GROQ_API_KEY || "",
     GROQ_SUPPORT_API_KEY: process.env.GROQ_SUPPORT_API_KEY || process.env.GROQ_API_KEY || "",
-    GROQ_SUPPORT_MODEL: process.env.GROQ_SUPPORT_MODEL || "openai/gpt-oss-120b"
+    GROQ_SUPPORT_MODEL: process.env.GROQ_SUPPORT_MODEL || "openai/gpt-oss-120b",
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY || ""
   };
 
   const body = `window.APP_CONFIG = ${JSON.stringify(config)};`;

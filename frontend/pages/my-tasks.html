@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Công việc của tôi | AECPT</title>
     <script src="../js/i18n.js"></script>
+    <script src="../js/theme.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,6 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../styles/sidebar.css">
     <link rel="stylesheet" href="../styles/my-tasks.css">
+    <link rel="stylesheet" href="../styles/theme.css">
 
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -36,28 +38,44 @@
                                autocomplete="off">
                     </label>
 
-                    <button type="button" class="filter-toggle-btn" id="toggleTaskFilters">
-                        <i data-lucide="sliders-horizontal"></i>
-                        Lọc
-                    </button>
+                    <div class="filter-menu-container">
+                        <button type="button" class="filter-toggle-btn" id="toggleTaskFilters"
+                                aria-expanded="false" aria-controls="advancedTaskFilters">
+                            <i data-lucide="sliders-horizontal"></i>
+                            Bộ lọc
+                        </button>
+
+                        <section class="advanced-filters" id="advancedTaskFilters" hidden>
+                            <div class="filter-field">
+                                <label for="groupFilter">Nhóm chức năng</label>
+                                <select id="groupFilter">
+                                    <option value="">Tất cả nhóm</option>
+                                    <option value="Edit">Edit</option>
+                                    <option value="Design">Design</option>
+                                    <option value="Content">Content</option>
+                                    <option value="Tech">Tech</option>
+                                    <option value="Photo">Photo</option>
+                                </select>
+                            </div>
+                            <div class="filter-panel-section">
+                                <span class="filter-panel-label">Trạng thái</span>
+                                <nav class="status-tabs" aria-label="Lọc theo trạng thái">
+                                    <button type="button" class="status-tab active" data-status="all">Tất cả</button>
+                                    <button type="button" class="status-tab" data-status="not_started">Chưa bắt đầu</button>
+                                    <button type="button" class="status-tab" data-status="in_progress">Đang thực hiện</button>
+                                    <button type="button" class="status-tab" data-status="pending_review">Chờ duyệt</button>
+                                    <button type="button" class="status-tab" data-status="completed">Đã hoàn thành</button>
+                                    <button type="button" class="status-tab overdue-status-tab" id="overdueTasksTab"
+                                            data-overdue-filter aria-pressed="false">
+                                        Trễ hạn <span id="overdueTasksTabCount">0</span>
+                                    </button>
+                                </nav>
+                            </div>
+                            <button type="button" class="text-btn" id="resetTaskFilters">Đặt lại bộ lọc</button>
+                        </section>
+                    </div>
                 </div>
             </header>
-
-            <!-- Filter panel -->
-            <section class="advanced-filters" id="advancedTaskFilters" hidden>
-                <div class="filter-field">
-                    <label for="groupFilter">Nhóm chức năng</label>
-                    <select id="groupFilter">
-                        <option value="">Tất cả nhóm</option>
-                        <option value="Edit">Edit</option>
-                        <option value="Design">Design</option>
-                        <option value="Content">Content</option>
-                        <option value="Tech">Tech</option>
-                        <option value="Photo">Photo</option>
-                    </select>
-                </div>
-                <button type="button" class="text-btn" id="resetTaskFilters">Đặt lại bộ lọc</button>
-            </section>
 
             <!-- Statistics: values are populated from API -->
             <section class="task-stats" aria-label="Thống kê công việc">
@@ -89,16 +107,43 @@
                     </div>
                     <strong id="completedCount">—</strong>
                 </article>
+                <button type="button" class="stat-card overdue-stat-card" id="overdueTasksCard"
+                        aria-pressed="false" aria-label="Lọc công việc trễ hạn">
+                    <span class="stat-card-top">
+                        <span>Trễ hạn</span>
+                        <i data-lucide="triangle-alert"></i>
+                    </span>
+                    <strong id="overdueTasksCount">—</strong>
+                </button>
             </section>
 
-            <!-- Status tabs -->
-            <nav class="status-tabs" aria-label="Lọc theo trạng thái">
-                <button type="button" class="status-tab active" data-status="all">Tất cả</button>
-                <button type="button" class="status-tab" data-status="not_started">Chưa bắt đầu</button>
-                <button type="button" class="status-tab" data-status="in_progress">Đang thực hiện</button>
-                <button type="button" class="status-tab" data-status="pending_review">Chờ duyệt</button>
-                <button type="button" class="status-tab" data-status="completed">Đã hoàn thành</button>
-            </nav>
+            <section class="upcoming-task-alert" id="upcomingTaskAlert"
+                     aria-labelledby="upcomingTaskAlertTitle" aria-live="polite" hidden>
+                <div class="upcoming-task-alert-heading">
+                    <span class="upcoming-task-alert-icon"><i data-lucide="bell-ring"></i></span>
+                    <div>
+                        <h2 id="upcomingTaskAlertTitle">Công việc sắp đến hạn</h2>
+                        <p id="upcomingTaskAlertSummary"></p>
+                    </div>
+                </div>
+                <div class="upcoming-task-alert-list" id="upcomingTaskAlertList"></div>
+            </section>
+
+            <section class="team-deadline-alert"
+                     id="teamUpcomingTaskAlert"
+                     aria-labelledby="teamUpcomingTaskAlertTitle"
+                     aria-live="polite"
+                     hidden>
+                <div class="team-deadline-heading">
+                    <span class="team-deadline-icon"><i data-lucide="calendar-clock"></i></span>
+                    <div>
+                        <h2 id="teamUpcomingTaskAlertTitle">Công việc sắp đến hạn</h2>
+                        <p>Công việc chưa hoàn thành có deadline trong hôm nay và 3 ngày tới.</p>
+                    </div>
+                    <strong class="team-deadline-count" id="teamUpcomingTaskAlertCount">0</strong>
+                </div>
+                <div class="team-deadline-list" id="teamUpcomingTaskAlertList"></div>
+            </section>
 
             <!-- Tasks table -->
             <section class="task-table-card">
@@ -238,9 +283,9 @@
         </section>
     </div>
 
-    <script src="../js/sidebar.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/supabase.js"></script>
+    <script src="../js/sidebar.js"></script>
     <script src="../js/my-tasks.js"></script>
     <script>
         if (window.lucide) window.lucide.createIcons();
