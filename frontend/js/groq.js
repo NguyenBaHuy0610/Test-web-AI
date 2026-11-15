@@ -16,17 +16,16 @@
     // API Key mặc định đọc từ .env thông qua /config.js (do server local hoặc Vercel sinh ra), fallback sang localStorage hoặc rỗng.
     const DEFAULT_API_KEY = (window.APP_CONFIG && window.APP_CONFIG.GROQ_API_KEY) || "";
 
-    // Danh sách model Groq theo thứ tự ưu tiên (ưu tiên các model khả dụng và phản hồi siêu nhanh)
+    // Danh sách model Groq theo thứ tự ưu tiên (các model đang hoạt động thực tế 100% trên Groq API)
     const MODELS = [
-        "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant",
-        "qwen/qwen3.8-27b"
+        "qwen/qwen3.8-27b",
+        "openai/gpt-oss-120b",
+        "openai/gpt-oss-20b"
     ];
 
     // Danh sách model Groq hỗ trợ nhận diện hình ảnh (Vision multimodal)
     const VISION_MODELS = [
-        "qwen/qwen3.8-27b",
-        "meta-llama/llama-4-scout-17b-16e-instruct"
+        "qwen/qwen3.8-27b"
     ];
 
     const MAX_HISTORY_DOC_CHARS = 8000;
@@ -55,7 +54,13 @@
     class GroqService {
         constructor() {
             this.apiKey = localStorage.getItem(STORAGE_KEY) || DEFAULT_API_KEY;
-            this.currentModel = localStorage.getItem(WORKING_MODEL_KEY) || "llama-3.3-70b-versatile";
+            const savedModel = localStorage.getItem(WORKING_MODEL_KEY);
+            if (savedModel && !MODELS.includes(savedModel)) {
+                localStorage.removeItem(WORKING_MODEL_KEY);
+                this.currentModel = MODELS[0];
+            } else {
+                this.currentModel = savedModel || MODELS[0];
+            }
             this.activeEventId = localStorage.getItem(ACTIVE_EVENT_KEY) || null;
             this.eventsCache = null;
         }
@@ -473,6 +478,8 @@
                 if (savedWorkingModel && prioritizedModels.includes(savedWorkingModel)) {
                     prioritizedModels.splice(prioritizedModels.indexOf(savedWorkingModel), 1);
                     prioritizedModels.unshift(savedWorkingModel);
+                } else if (savedWorkingModel && !prioritizedModels.includes(savedWorkingModel)) {
+                    localStorage.removeItem(WORKING_MODEL_KEY);
                 }
             }
 
