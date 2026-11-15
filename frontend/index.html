@@ -4,9 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="0; url=pages/login.html">
     <title>Task Management</title>
     <script src="js/i18n.js"></script>
+    <script>
+        // Chuyển hướng kèm theo hash (chứa token auth hoặc thông báo lỗi từ Supabase)
+        const hash = window.location.hash || "";
+        window.location.replace("pages/login.html" + hash);
+    </script>
 </head>
 <body>
     <p>Đang chuyển đến trang đăng nhập...</p>

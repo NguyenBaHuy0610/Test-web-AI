@@ -124,6 +124,43 @@ function clearErrors() {
 }
 
 
+function checkUrlAuthErrors() {
+    const hash = window.location.hash || "";
+    if (!hash) return;
+    const params = new URLSearchParams(hash.replace(/^#/, ""));
+    const errorCode = params.get("error_code");
+    const errorDescription = params.get("error_description");
+
+    if (errorCode === "otp_expired" || (errorDescription && errorDescription.toLowerCase().includes("expired"))) {
+        formFeedback.innerHTML = `⚠️ <strong>Liên kết xác nhận email đã hết hạn</strong> (do email đã gửi từ hơn 1 giờ trước).<br>Vui lòng <a href="#" id="resendOtpBtn" style="color:var(--primary,#4f46e5);font-weight:600;text-decoration:underline;">bấm vào đây để gửi lại email xác nhận mới</a>.`;
+        formFeedback.style.color = "#dc2626";
+
+        document.getElementById("resendOtpBtn")?.addEventListener("click", async (e) => {
+            e.preventDefault();
+            const email = emailInput.value.trim() || prompt("Nhập email bạn đã đăng ký để gửi lại liên kết:");
+            if (!email) return;
+            formFeedback.textContent = "Đang gửi lại email xác nhận...";
+            formFeedback.style.color = "#555";
+            try {
+                const { error } = await window.supabaseClient.auth.resend({
+                    type: "signup",
+                    email
+                });
+                if (error) throw error;
+                formFeedback.textContent = "✅ Đã gửi lại email xác nhận! Vui lòng kiểm tra hộp thư mới và nhấn link trong vòng 1 giờ.";
+                formFeedback.style.color = "#15803d";
+            } catch (err) {
+                console.error("Lỗi gửi lại OTP:", err);
+                formFeedback.textContent = "Lỗi gửi lại: " + (err.message || "Không thể gửi lại email lúc này.");
+                formFeedback.style.color = "#dc2626";
+            }
+        });
+    } else if (params.get("error")) {
+        formFeedback.textContent = `⚠️ Lỗi xác thực: ${decodeURIComponent(errorDescription || params.get("error"))}`;
+        formFeedback.style.color = "#dc2626";
+    }
+}
+
 window.addEventListener("DOMContentLoaded", function () {
 
     const savedEmail = localStorage.getItem("mediatask_email");
@@ -135,6 +172,7 @@ window.addEventListener("DOMContentLoaded", function () {
         rememberMe.checked = true;
     }
 
+    checkUrlAuthErrors();
 });
 
 
