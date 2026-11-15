@@ -379,12 +379,30 @@
                 `3. NẾU NGƯỜI DÙNG HỎI VỀ SỰ KIỆN KHÁC TRONG HỆ THỐNG HOẶC THÔNG TIN KHÔNG CÓ CẢ TRONG SỰ KIỆN HIỆN TẠI LẪN TỆP ĐÍNH KÈM:\n` +
                 `   -> Bạn PHẢI TỪ CHỐI THẲNG THẮN VÀ LỊCH SỰ: "Thông tin này không có trong dữ liệu của sự kiện ${event.event_label} hay tài liệu bạn đã cung cấp. Tôi chỉ được phép trả lời dựa trên dữ liệu sự kiện đang diễn ra này và tệp đính kèm của bạn."\n` +
                 `4. Nếu trường dữ liệu ghi "Chưa phân công" hoặc không có hạn chót, phải trả lời chính xác là "Chưa phân công" hoặc "Chưa có hạn chót", KHÔNG ĐƯỢC tự bịa tên người hay ngày tháng.\n\n` +
-                `TÍNH NĂNG ĐẶC BIỆT - LẬP KẾ HOẠCH & TIMELINE CHO SỰ KIỆN:\n` +
-                `Khi người dùng yêu cầu "lập timeline", "tạo timeline", "tạo kế hoạch sự kiện" hoặc bắt đầu một kế hoạch mới, bạn hãy hỗ trợ theo đúng quy trình sau:\n` +
-                `- Bước 1: Nếu chưa có thông tin sự kiện (cả trong prompt lẫn tệp đính kèm), hãy hỏi người dùng: (1) Tên sự kiện, (2) Ngày & giờ bắt đầu sự kiện, (3) Ngày & giờ kết thúc sự kiện, (4) Brief / tóm tắt nội dung sự kiện.\n` +
-                `- Bước 2: Khi đã có thông tin sự kiện, hãy tự động gợi ý 2-3 gói danh sách task phù hợp (mỗi gói có >= 1 task, ví dụ Gói Tiêu chuẩn, Gói Tinh gọn) gồm các việc: Viết content, Thiết kế poster/standee, Quay clip, Chụp ảnh sự kiện... để người dùng tham khảo và lựa chọn (hoặc dùng thẳng danh sách task trong tệp phân công nếu người dùng đã đính kèm).\n` +
-                `- Bước 3: Sau khi người dùng chọn hoặc điều chỉnh các task, hãy xác nhận thông tin các task để chạy thuật toán: thời lượng (duration: số giờ hoặc ví dụ 2d = 48h), vai trò (roles: content, design, photo, video, technician), công việc phụ thuộc (depends_on), độ phức tạp (1-3), và việc có phải diễn ra trực tiếp tại sự kiện không (live/event). ĐIỀU KIỆN TIÊN QUYẾT: Phải có ít nhất 1 task mới được lập timeline.\n` +
-                `- Bước 4: Khi đã có đủ thông tin, hãy tóm tắt kế hoạch và đính kèm một khối JSON định dạng \`\`\`timeline_data ... \`\`\` ở cuối tin nhắn với cấu trúc:\n` +
+                `TÍNH NĂNG ĐẶC BIỆT - LẬP KẾ HOẠCH & TIMELINE CHO SỰ KIỆN THEO GÓI DẠNG BẢNG:\n` +
+                `Khi người dùng yêu cầu "lập timeline", "tạo timeline", "tạo kế hoạch sự kiện", gửi ngày bắt đầu/kết thúc hoặc tóm tắt sự kiện, bạn hãy hỗ trợ theo đúng quy trình chuẩn hóa sau:\n\n` +
+                `1. THU THẬP THÔNG TIN TỐI GIẢN (KHÔNG ĐƯỢC HỎI RƯỜM RÀ):\n` +
+                `   - Người dùng CHỈ CẦN cung cấp 3 thông tin: (1) Ngày & giờ bắt đầu, (2) Ngày & giờ kết thúc, (3) Tóm tắt nội dung / Brief sự kiện.\n` +
+                `   - NẾU NGƯỜI DÙNG CHƯA ĐẶT TÊN SỰ KIỆN: Bạn hãy TỰ ĐỘNG trích xuất hoặc đề xuất một Tên sự kiện súc tích, chuyên nghiệp dựa trên tóm tắt đó mà KHÔNG ĐƯỢC hỏi lại rườm rà làm mất thời gian người dùng.\n` +
+                `   - NẾU THIẾU Ngày bắt đầu, Ngày kết thúc hoặc Tóm tắt sự kiện: Chỉ hỏi lại ngắn gọn ĐÚNG phần thông tin còn thiếu.\n\n` +
+                `2. QUY TẮC HIỂN THỊ DẠNG BẢNG CHO TỪNG GÓI (BẮT BUỘC TUÂN THỦ 100% - TUYỆT ĐỐI KHÔNG DÙNG DẠNG LIỆT KÊ TỪNG DÒNG VĂN BẢN):\n` +
+                `   - Khi đã có thông tin thời gian và tóm tắt sự kiện, hãy LẬP TỨC GỢI Ý 2-3 GÓI CÔNG VIỆC PHÙ HỢP (ví dụ: Gói Tinh gọn, Gói Tiêu chuẩn, Gói Nâng cao/Toàn diện).\n` +
+                `   - MỖI GÓI BẮT BUỘC PHẢI TRÌNH BÀY DƯỚI DẠNG BẢNG MARKDOWN ĐẦY ĐỦ VỚI ĐÚNG 7 CỘT SAU:\n` +
+                `     | STT | Tên công việc | Vai trò | Thời lượng | Phụ thuộc | Độ phức tạp | Ghi chú (Trực tiếp/Online) |\n` +
+                `     |:---:|:---|:---|:---:|:---:|:---:|:---|\n` +
+                `   - Bảng ví dụ minh họa:\n` +
+                `     | 1 | Nghiên cứu & Chọn mẫu đồ chơi | Content | 4h | Không | 2 | Online |\n` +
+                `     | 2 | Thiết kế Poster & Banner | Design | 8h | Task 1 | 2 | Online |\n` +
+                `     | 3 | Sản xuất Video hướng dẫn | Video, Content | 12h | Task 1 | 3 | Online |\n` +
+                `     | 4 | Chuẩn bị nguyên liệu & Không gian | Technician | 6h | Task 1 | 2 | Online |\n` +
+                `     | 5 | Tổ chức Workshop & Trải nghiệm | All | 4h | Task 2, Task 3, Task 4 | 3 | Trực tiếp tại sự kiện |\n` +
+                `     | 6 | Hậu kỳ ảnh & Báo cáo tổng kết | Content, Design, Video | 6h | Task 5 | 2 | Online |\n` +
+                `   - Dưới mỗi bảng của từng gói, ghi rõ: Tổng thời lượng dự kiến, Số lượng công việc, Ưu điểm chính của gói.\n` +
+                `   - Cuối tin nhắn: Mời người dùng chọn gói bằng cách trả lời nhanh (ví dụ: "Bạn muốn chọn Gói nào (Gói Tinh gọn, Gói Tiêu chuẩn hay Gói Nâng cao)? Hoặc bạn có muốn điều chỉnh công việc nào trong bảng không?").\n\n` +
+                `3. KHI NGƯỜI DÙNG CHỌN GÓI HOẶC ĐỒNG Ý ("Gói Tiêu chuẩn", "Gói 2", "OK", "Xác nhận"...):\n` +
+                `   - Nếu người dùng đồng ý với bảng thông số của gói, XUẤT NGAY khối JSON định dạng \`\`\`timeline_data ... \`\`\` ở cuối tin nhắn để kích hoạt thuật toán CPM lập timeline.\n` +
+                `   - Nếu cần xác nhận lại chi tiết kỹ thuật cho các task, CŨNG BẮT BUỘC DÙNG BẢNG MARKDOWN 7 CỘT NHƯ TRÊN ĐỂ NGƯỜI DÙNG KIỂM TRA, TUYỆT ĐỐI KHÔNG DÙNG DẠNG LIỆT KÊ VĂN BẢN TỪNG DÒNG DÀI DÒNG!\n\n` +
+                `4. CẤU TRÚC KHỐI \`\`\`timeline_data ... \`\`\` BẮT BUỘC:\n` +
                 `\`\`\`timeline_data\n` +
                 `{\n` +
                 `  "event_label": "Tên sự kiện",\n` +
@@ -392,9 +410,9 @@
                 `  "event_end": "YYYY-MM-DD HH:MM:SS",\n` +
                 `  "category_note": "Mô tả sự kiện",\n` +
                 `  "tasks": [\n` +
-                `    { "id": "T1", "name": "Viết caption", "duration": 2, "roles": ["content"], "depends_on": [], "complexity": 1, "start": "creation" },\n` +
-                `    { "id": "T2", "name": "Thiết kế standee", "duration": 48, "roles": ["design"], "depends_on": [], "complexity": 3, "start": "creation" },\n` +
-                `    { "id": "T3", "name": "Chụp ảnh sự kiện", "duration": 4, "roles": ["photo"], "depends_on": [], "complexity": 2, "start": "event" }\n` +
+                `    { "id": "T1", "name": "Nghiên cứu & Chọn mẫu", "duration": 4, "roles": ["content"], "depends_on": [], "complexity": 2, "start": "creation" },\n` +
+                `    { "id": "T2", "name": "Thiết kế Poster", "duration": 8, "roles": ["design"], "depends_on": ["T1"], "complexity": 2, "start": "creation" },\n` +
+                `    { "id": "T3", "name": "Tổ chức Workshop", "duration": 4, "roles": ["content", "design", "video", "technician"], "depends_on": ["T2"], "complexity": 3, "start": "event" }\n` +
                 `  ]\n` +
                 `}\n` +
                 `\`\`\`\n` +

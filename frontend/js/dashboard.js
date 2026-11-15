@@ -256,17 +256,79 @@ function formatMessage(content) {
     safe = safe.replace(/\*(.*?)\*/g, "<em>$1</em>");
     safe = safe.replace(/`([^`]+)`/g, "<code style='background:rgba(0,0,0,0.06); padding:2px 5px; border-radius:4px; font-family:monospace;'>$1</code>");
 
-    return safe
-        .split("\n")
-        .map(line => {
-            const trimmed = line.trim();
-            if (!trimmed) return "";
-            if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
-                return `<li style="margin-left: 18px; margin-bottom: 4px;">${trimmed.substring(2)}</li>`;
-            }
-            return `<p style="margin-bottom: 6px;">${line}</p>`;
-        })
-        .join("");
+    const lines = safe.split("\n");
+    const result = [];
+    let inTable = false;
+    let tableLines = [];
+
+    function flushTable() {
+        if (!tableLines.length) return;
+        const validRows = tableLines.filter(row => {
+            const trimmed = row.trim();
+            return !/^\|?\s*[-:]+[-| :]*\s*\|?$/.test(trimmed);
+        });
+
+        if (validRows.length >= 1) {
+            let tableHtml = `<div class="chat-md-table-wrap"><table class="chat-md-table">`;
+            
+            // Header
+            const headerCells = validRows[0].split("|").map(c => c.trim()).filter((c, i, a) => !(i === 0 && c === "") && !(i === a.length - 1 && c === ""));
+            tableHtml += `<thead><tr>`;
+            headerCells.forEach(cell => {
+                tableHtml += `<th>${cell}</th>`;
+            });
+            tableHtml += `</tr></thead><tbody>`;
+
+            // Body
+            validRows.slice(1).forEach((row, rIdx) => {
+                const cells = row.split("|").map(c => c.trim()).filter((c, i, a) => !(i === 0 && c === "") && !(i === a.length - 1 && c === ""));
+                if (cells.length) {
+                    tableHtml += `<tr>`;
+                    cells.forEach((cell, cIdx) => {
+                        const isFirst = cIdx === 0;
+                        tableHtml += `<td class="${isFirst ? 'col-stt' : ''}">${cell}</td>`;
+                    });
+                    tableHtml += `</tr>`;
+                }
+            });
+
+            tableHtml += `</tbody></table></div>`;
+            result.push(tableHtml);
+        }
+        tableLines = [];
+        inTable = false;
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmed = line.trim();
+
+        if (trimmed.startsWith("|") && (trimmed.endsWith("|") || trimmed.includes("|"))) {
+            inTable = true;
+            tableLines.push(trimmed);
+            continue;
+        } else if (inTable) {
+            flushTable();
+        }
+
+        if (!trimmed) {
+            continue;
+        }
+
+        if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+            result.push(`<li style="margin-left: 18px; margin-bottom: 4px;">${trimmed.substring(2)}</li>`);
+        } else if (/^\d+\.\s+/.test(trimmed)) {
+            result.push(`<p style="margin-bottom: 6px; font-weight: 600; color: var(--primary-dark, #312e81);">${line}</p>`);
+        } else {
+            result.push(`<p style="margin-bottom: 6px;">${line}</p>`);
+        }
+    }
+
+    if (inTable) {
+        flushTable();
+    }
+
+    return result.join("");
 }
 
 function renderTimelinePlanCard(plan) {
