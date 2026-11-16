@@ -197,6 +197,13 @@ Deno.serve(async request => {
 
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
+
+    // Provider 1: Brevo (Không cần domain, xác thực qua email Gmail cá nhân)
+    const brevoApiKey = Deno.env.get("BREVO_API_KEY");
+    const brevoSenderEmail = Deno.env.get("BREVO_SENDER_EMAIL") || "nguyenbahuy0610@gmail.com";
+    const brevoSenderName = Deno.env.get("BREVO_SENDER_NAME") || "AECPT Nhắc việc";
+
+    // Provider 2: Resend
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     const emailFrom = Deno.env.get("EMAIL_FROM") || "AECPT Notifications <onboarding@resend.dev>";
 
@@ -213,7 +220,8 @@ Deno.serve(async request => {
 
     const forceAll = Boolean(body.force_all);
     const targetWorkspaceId = body.target_workspace_id ? String(body.target_workspace_id) : null;
-    const forceSimulate = Boolean(body.simulate) || !resendApiKey;
+    const activeProvider = brevoApiKey ? "brevo" : (resendApiKey ? "resend" : "simulation");
+    const forceSimulate = Boolean(body.simulate) || activeProvider === "simulation";
 
     const adminClient = createClient(supabaseUrl, serviceKey, {
         auth: { autoRefreshToken: false, persistSession: false }
@@ -239,13 +247,13 @@ Deno.serve(async request => {
         sent: 0,
         simulated: 0,
         failed: 0,
-        mode: forceSimulate ? "mock_simulation" : "resend_live",
+        mode: forceSimulate ? "mock_simulation" : (activeProvider === "brevo" ? "brevo_live" : "resend_live"),
         details: [] as Array<Record<string, unknown>>
     };
 
-    console.log(`[EmailReminder] Bắt đầu xử lý ${stats.total_queued} email. Chế độ: ${stats.mode}`);
+    console.log(`[EmailReminder] Bắt đầu xử lý ${stats.total_queued} email. Provider: ${activeProvider} (Mode: ${stats.mode})`);
 
-    // Hàm gửi email qua Resend hoặc Simulation
+    // Hàm gửi email qua Brevo, Resend hoặc Simulation
     async function dispatchEmail(
         to: string,
         subject: string,
@@ -266,6 +274,40 @@ Deno.serve(async request => {
             status = "simulated";
             console.log(`[SIMULATED EMAIL] To: ${to} | Subject: "${subject}" | DedupeKey: ${dedupeKey}`);
             stats.simulated++;
+        } else if (activeProvider === "brevo") {
+            try {
+                const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+                    method: "POST",
+                    headers: {
+                        "api-key": brevoApiKey!,
+                        "accept": "application/json",
+                        "content-type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        sender: {
+                            name: brevoSenderName,
+                            email: brevoSenderEmail
+                        },
+                        to: [{ email: to }],
+                        subject,
+                        htmlContent: html
+                    })
+                });
+
+                const resJson = await res.json();
+                if (!res.ok) {
+                    throw new Error(resJson.message || `HTTP ${res.status}`);
+                }
+                responseId = resJson.messageId || null;
+                stats.sent++;
+                console.log(`[BREVO EMAIL SENT] To: ${to} | From: ${brevoSenderEmail} | ID: ${responseId}`);
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : String(err);
+                console.error(`[BREVO EMAIL ERROR] To: ${to} | Lỗi:`, message);
+                status = "failed";
+                errorMessage = message;
+                stats.failed++;
+            }
         } else {
             try {
                 let currentFrom = emailFrom;
