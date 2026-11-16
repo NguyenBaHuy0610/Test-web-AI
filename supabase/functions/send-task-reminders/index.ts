@@ -268,27 +268,49 @@ Deno.serve(async request => {
             stats.simulated++;
         } else {
             try {
-                const res = await fetch("https://api.resend.com/emails", {
+                let currentFrom = emailFrom;
+                let res = await fetch("https://api.resend.com/emails", {
                     method: "POST",
                     headers: {
                         "Authorization": `Bearer ${resendApiKey}`,
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        from: emailFrom,
+                        from: currentFrom,
                         to: [to],
                         subject,
                         html
                     })
                 });
 
-                const resJson = await res.json();
+                let resJson = await res.json();
+
+                // Tự động fallback sang onboarding@resend.dev nếu tên miền riêng chưa kịp verify DNS
+                if (!res.ok && String(resJson.message || "").toLowerCase().includes("not verified") && !currentFrom.includes("onboarding@resend.dev")) {
+                    currentFrom = "AECPT Nhắc việc <onboarding@resend.dev>";
+                    console.warn(`[Resend Fallback] Tên miền chưa verify DNS, thử lại bằng ${currentFrom}`);
+                    res = await fetch("https://api.resend.com/emails", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${resendApiKey}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            from: currentFrom,
+                            to: [to],
+                            subject,
+                            html
+                        })
+                    });
+                    resJson = await res.json();
+                }
+
                 if (!res.ok) {
                     throw new Error(resJson.message || resJson.error || `HTTP ${res.status}`);
                 }
                 responseId = resJson.id || null;
                 stats.sent++;
-                console.log(`[LIVE EMAIL SENT] To: ${to} | ID: ${responseId}`);
+                console.log(`[LIVE EMAIL SENT] To: ${to} | From: ${currentFrom} | ID: ${responseId}`);
             } catch (err: unknown) {
                 const message = err instanceof Error ? err.message : String(err);
                 console.error(`[LIVE EMAIL ERROR] To: ${to} | Lỗi:`, message);
