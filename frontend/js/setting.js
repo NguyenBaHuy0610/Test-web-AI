@@ -49,6 +49,107 @@ document.addEventListener("DOMContentLoaded", async () => {
     displayNameInput.value = appUser?.name || metadata.full_name || metadata.name || "";
     emailInput.value = user.email || "";
 
+    // Cấu hình riêng cho Trưởng nhóm (Leader): Thời gian nhận email nhắc task tổng hợp
+    const leaderEmailSection = document.getElementById("leaderEmailSection");
+    const leaderEmailForm = document.getElementById("leaderEmailForm");
+    const leaderDailySummaryTime = document.getElementById("leaderDailySummaryTime");
+    const saveLeaderEmailButton = document.getElementById("saveLeaderEmailButton");
+    const testEmailReminderButton = document.getElementById("testEmailReminderButton");
+
+    const isLeader = Boolean(appUser?.isLeader || appUser?.role === "Trưởng nhóm" || String(appUser?.accountRole || "").toLowerCase() === "leader");
+    if (isLeader && leaderEmailSection) {
+        leaderEmailSection.hidden = false;
+
+        // Tải giờ nhận mail hiện tại từ database
+        (async () => {
+            try {
+                const { data: savedTime, error: rpcErr } = await client.rpc("get_my_daily_summary_time");
+                if (!rpcErr && savedTime) {
+                    leaderDailySummaryTime.value = String(savedTime).slice(0, 5);
+                } else {
+                    const { data: tm } = await client
+                        .from("team_members")
+                        .select("daily_summary_time")
+                        .eq("user_id", user.id)
+                        .maybeSingle();
+                    if (tm?.daily_summary_time) {
+                        leaderDailySummaryTime.value = String(tm.daily_summary_time).slice(0, 5);
+                    }
+                }
+            } catch (err) {
+                console.warn("Không thể tải giờ nhận mail của Leader:", err);
+            }
+        })();
+
+        // Lưu thời gian nhận email
+        leaderEmailForm?.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            showMessage("leaderEmailMessage", "");
+            const timeValue = leaderDailySummaryTime.value;
+            if (!timeValue) {
+                showMessage("leaderEmailMessage", "Vui lòng chọn khung giờ nhận email.", "error");
+                return;
+            }
+
+            setBusy(saveLeaderEmailButton, true, "Đang lưu…", "Lưu thời gian");
+            try {
+                const { error: rpcErr } = await client.rpc("set_my_daily_summary_time", {
+                    p_time: timeValue
+                });
+                if (rpcErr) throw rpcErr;
+
+                showMessage("leaderEmailMessage", `Đã lưu thời gian nhận mail tổng hợp: ${timeValue} (Giờ VN).`, "success");
+            } catch (err) {
+                console.error("Lỗi lưu giờ nhận mail:", err);
+                showMessage("leaderEmailMessage", `Không lưu được: ${err.message}`, "error");
+            } finally {
+                setBusy(saveLeaderEmailButton, false, "Đang lưu…", "Lưu thời gian");
+            }
+        });
+
+        // Nút gửi thử email nhắc việc ngay
+        testEmailReminderButton?.addEventListener("click", async () => {
+            showMessage("leaderEmailMessage", "Đang gửi yêu cầu kiểm tra và tạo email nhắc việc…");
+            testEmailReminderButton.disabled = true;
+
+            try {
+                const sessionRes = await client.auth.getSession();
+                const token = sessionRes?.data?.session?.access_token || client.supabaseKey;
+
+                const response = await fetch("https://roxgrvqmctdnajiorwcv.supabase.co/functions/v1/send-task-reminders", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "apikey": client.supabaseKey,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        force_all: true,
+                        target_workspace_id: appUser?.workspaceId || null
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+
+                const stats = data.stats || {};
+                const modeLabel = stats.mode === "mock_simulation" ? "(Chế độ mô phỏng / Mock)" : "(Gửi thực tế qua Resend)";
+                showMessage(
+                    "leaderEmailMessage",
+                    `Đã kích hoạt gửi thử thành công! ${modeLabel}. Tổng email xử lý: ${stats.total_queued || 0} (Thành công: ${stats.sent || 0}, Mô phỏng: ${stats.simulated || 0}).`,
+                    "success"
+                );
+            } catch (err) {
+                console.error("Lỗi gửi thử email nhắc việc:", err);
+                showMessage("leaderEmailMessage", `Không gửi được: ${err.message}`, "error");
+            } finally {
+                testEmailReminderButton.disabled = false;
+            }
+        });
+    }
+
     profileForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         showMessage("profileMessage", "");

@@ -86,6 +86,34 @@
         </div>
       </section>
 
+      <!-- Dành riêng cho Trưởng ban (Leader) -->
+      <section class="settings-card" id="leaderEmailSection" aria-labelledby="leaderEmailHeading" hidden>
+        <div class="settings-card-heading">
+          <span class="settings-icon"><i data-lucide="mail"></i></span>
+          <div>
+            <h2 id="leaderEmailHeading">Thời gian nhận mail nhắc task</h2>
+            <p>Hệ thống tự động tổng hợp danh sách các công việc còn hạn trong 0 - 48h và gửi email định kỳ mỗi ngày.</p>
+          </div>
+        </div>
+        <form id="leaderEmailForm" class="settings-form">
+          <label for="leaderDailySummaryTime">Khung giờ nhận email tổng hợp hàng ngày</label>
+          <div class="leader-time-input-wrap" style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
+            <input id="leaderDailySummaryTime" type="time" value="20:00" required style="max-width: 160px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px;">
+            <small style="color: #64748b;">Múi giờ Việt Nam (GMT+7, Asia/Ho_Chi_Minh). Mặc định: 20:00.</small>
+          </div>
+          <p class="notification-footnote" style="margin-top: 10px; font-size: 13px; color: #64748b;">
+            * Mỗi Leader tự đặt giờ nhận riêng. Email bao gồm bảng danh sách công việc nhóm theo từng ban/vai trò (Content, Design, Video...), ưu tiên công việc sắp đến hạn trước.
+          </p>
+          <div class="form-actions" style="margin-top: 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+            <p class="form-message" id="leaderEmailMessage" role="status" aria-live="polite" style="margin: 0; flex: 1; min-width: 200px;"></p>
+            <button class="settings-button-secondary" type="button" id="testEmailReminderButton" style="display: inline-flex; align-items: center; gap: 6px;">
+              <i data-lucide="send" style="width: 15px; height: 15px;"></i> Gửi thử email nhắc việc ngay
+            </button>
+            <button class="settings-button-primary" type="submit" id="saveLeaderEmailButton">Lưu thời gian</button>
+          </div>
+        </form>
+      </section>
+
             <section class="settings-card" aria-labelledby="profileHeading">
                 <div class="settings-card-heading">
                     <span class="settings-icon"><i data-lucide="user-round"></i></span>
