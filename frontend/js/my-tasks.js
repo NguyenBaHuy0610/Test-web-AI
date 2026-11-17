@@ -768,6 +768,10 @@ function openModal(modal) {
 function closeModal(modal) {
     if (!modal) return;
 
+    if (modal === el.detailModal && window.TaskComments) {
+        window.TaskComments.unmount();
+    }
+
     modal.hidden = true;
 
     const hasOpenModal = [
@@ -966,6 +970,8 @@ function renderTaskDetail(task) {
                 <p class="submission-link-hint">Link được lưu trong danh sách tệp đính kèm của công việc; hệ thống không tải tệp lên.</p>
             </form>
         </section>` : ""}
+
+        <section class="detail-section task-comments-section" id="myTaskCommentsSection"></section>
     `;
 
     const statusInput = document.getElementById("taskStatusInput");
@@ -981,6 +987,19 @@ function renderTaskDetail(task) {
     document.querySelector(".task-detail-footer").hidden = !hasAssignment;
 
     refreshIcons();
+
+    if (window.TaskComments) {
+        window.TaskComments.mount(
+            document.getElementById("myTaskCommentsSection"),
+            task.id,
+            {
+                title: task.title,
+                workspaceId: state.workspaceId || "WS_01",
+                currentMemberId: state.memberId,
+                isLeader: state.isTeamLeader
+            }
+        );
+    }
 }
 
 function getSafeSubmissionUrl(value) {

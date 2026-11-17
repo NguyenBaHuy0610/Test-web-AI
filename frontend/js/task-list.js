@@ -480,6 +480,9 @@
 
   function closeModal(modal) {
     if (!modal) return;
+    if (modal === dom.detailModal && window.TaskComments) {
+      window.TaskComments.unmount();
+    }
     modal.hidden = true;
     if (![dom.detailModal, dom.progressModal].some(m => m && !m.hidden)) {
       document.body.classList.remove("modal-open");
@@ -598,9 +601,22 @@
       <section class="detail-section">
         <h4>Thông tin chưa có trong database</h4>
         <p class="personal-note note-empty">Mức độ ưu tiên, người giao việc, phần trăm tiến độ, ghi chú và tệp đính kèm chưa có cột/bảng tương ứng trong schema hiện tại.</p>
-      </section>`;
+      </section>
+      <section class="detail-section task-comments-section" id="taskListCommentsSection"></section>`;
     if (dom.updateButton) dom.updateButton.disabled = !state.memberId ||
       !assignments.some(a => String(a.member_id) === String(state.memberId));
+
+    if (window.TaskComments) {
+      window.TaskComments.mount(
+        document.getElementById("taskListCommentsSection"),
+        task.task_id,
+        {
+          title: task.task_title || task.submission_label || task.task_id,
+          workspaceId: state.workspaceId || "WS_01",
+          isLeader: state.isTeamLeader
+        }
+      );
+    }
   }
 
   function openDetail(taskId, navigation = "root") {

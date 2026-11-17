@@ -1247,9 +1247,25 @@
         document.body.classList.add("modal-open");
 
         refreshIcons();
+
+        if (window.TaskComments) {
+            window.TaskComments.mount(
+                document.getElementById("calendarTaskCommentsSection"),
+                task.task_id,
+                {
+                    title: task.task_title || task.task_id,
+                    workspaceId: state.workspaceId || "WS_01",
+                    isLeader: state.isTeamLeader
+                }
+            );
+        }
     }
 
     function closeTaskDetail() {
+        if (window.TaskComments) {
+            window.TaskComments.unmount();
+        }
+
         if (elements.detailOverlay) {
             elements.detailOverlay.hidden = true;
         }

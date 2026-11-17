@@ -124,7 +124,11 @@ function renderAppNotificationCenter(notifications, container, loadError = "") {
             ? "triangle-alert"
             : notification.type === "task_assigned"
                 ? "clipboard-check"
-                : "calendar-clock");
+                : notification.type === "task_comment"
+                    ? "message-square"
+                    : notification.type === "task_mention"
+                        ? "at-sign"
+                        : "calendar-clock");
         icon.appendChild(iconElement);
 
         const content = document.createElement("span");

@@ -1,0 +1,489 @@
+/* ==============================================================================
+   AECPT - FACEBOOK-STYLE TASK COMMENTS STYLING
+   ============================================================================== */
+
+.task-comments-wrapper {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+    font-family: inherit;
+    color: #1e293b;
+}
+
+.comments-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.comments-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.comments-title svg {
+    width: 18px;
+    height: 18px;
+    color: #4f46e5;
+}
+
+.comments-count-badge {
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 9999px;
+}
+
+/* Comment List & Thread Tree */
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.comment-empty-state {
+    padding: 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px dashed #cbd5e1;
+}
+
+.comment-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Thụt lề theo cấp (Rule 5C: tối đa 3 cấp thụt lề) */
+.comment-item.depth-1 {
+    margin-left: 0;
+}
+
+.comment-item.depth-2 {
+    margin-left: 38px;
+    position: relative;
+}
+
+.comment-item.depth-2::before {
+    content: "";
+    position: absolute;
+    left: -24px;
+    top: 16px;
+    width: 18px;
+    height: 20px;
+    border-left: 2px solid #e2e8f0;
+    border-bottom: 2px solid #e2e8f0;
+    border-bottom-left-radius: 8px;
+}
+
+.comment-item.depth-3,
+.comment-item.depth-max {
+    margin-left: 32px;
+    position: relative;
+}
+
+.comment-item.depth-3::before,
+.comment-item.depth-max::before {
+    content: "";
+    position: absolute;
+    left: -20px;
+    top: 16px;
+    width: 16px;
+    height: 20px;
+    border-left: 2px solid #e2e8f0;
+    border-bottom: 2px solid #e2e8f0;
+    border-bottom-left-radius: 8px;
+}
+
+.comment-node {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+/* Avatar */
+.comment-avatar {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    user-select: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    overflow: hidden;
+}
+
+.comment-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.comment-item.depth-2 .comment-avatar,
+.comment-item.depth-3 .comment-avatar {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    font-size: 11px;
+}
+
+/* Bubble */
+.comment-bubble-wrap {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.comment-bubble {
+    background: #f1f5f9;
+    padding: 10px 14px;
+    border-radius: 18px;
+    display: inline-block;
+    max-width: 100%;
+    word-break: break-word;
+    border: 1px solid transparent;
+    transition: background 0.15s ease;
+}
+
+.comment-bubble:hover {
+    background: #eef2f6;
+}
+
+.comment-author-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.comment-author-name {
+    font-weight: 700;
+    font-size: 13.5px;
+    color: #0f172a;
+}
+
+.comment-role-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 10px;
+    text-transform: capitalize;
+}
+
+.role-badge-leader {
+    background: #fdf2f8;
+    color: #be185d;
+    border: 1px solid #fbcfe8;
+}
+
+.role-badge-member {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+
+.role-badge-content {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.role-badge-design {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.role-badge-editor,
+.role-badge-video {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.role-badge-photo {
+    background: #faf5ff;
+    color: #7e22ce;
+}
+
+.role-badge-technician {
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.comment-text {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #334155;
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.comment-text.is-deleted {
+    font-style: italic;
+    color: #94a3b8;
+}
+
+/* Mention tag */
+.mention-tag {
+    font-weight: 600;
+    color: #4338ca;
+    background: #e0e7ff;
+    padding: 1px 5px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.mention-tag-all {
+    color: #b91c1c;
+    background: #fee2e2;
+}
+
+/* Footer / Actions */
+.comment-actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-left: 12px;
+    margin-top: 3px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.comment-time {
+    color: #94a3b8;
+}
+
+.comment-action-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.comment-action-btn:hover {
+    color: #4f46e5;
+    text-decoration: underline;
+}
+
+.comment-action-btn.btn-delete:hover {
+    color: #e11d48;
+}
+
+/* In-place edit form */
+.comment-edit-box {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.comment-edit-input {
+    width: 100%;
+    min-height: 60px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-family: inherit;
+    font-size: 13.5px;
+    line-height: 1.4;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.comment-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* Composer / Input Area */
+.comment-composer {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 14px;
+    position: relative;
+}
+
+.composer-input-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    padding: 6px 12px;
+    transition: all 0.2s ease;
+}
+
+.composer-input-wrapper:focus-within {
+    border-color: #6366f1;
+    background: #ffffff;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
+.comment-textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 13.5px;
+    line-height: 1.4;
+    resize: none;
+    max-height: 120px;
+    min-height: 24px;
+    padding: 4px 0;
+    color: #1e293b;
+    box-sizing: border-box;
+}
+
+.composer-send-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #4f46e5;
+    color: #ffffff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-left: 6px;
+    transition: all 0.15s ease;
+}
+
+.composer-send-btn:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.composer-send-btn:not(:disabled):hover {
+    background: #4338ca;
+    transform: scale(1.05);
+}
+
+.composer-send-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Reply Sub-composer */
+.reply-composer-wrap {
+    margin-top: 8px;
+    margin-left: 36px;
+}
+
+.reply-target-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    color: #64748b;
+    margin-bottom: 4px;
+    padding: 0 4px;
+}
+
+.reply-cancel-btn {
+    background: none;
+    border: none;
+    color: #e11d48;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 11.5px;
+    padding: 0;
+}
+
+.reply-cancel-btn:hover {
+    text-decoration: underline;
+}
+
+/* Mentions Autocomplete Dropdown */
+.mentions-dropdown {
+    position: absolute;
+    bottom: 100%;
+    left: 44px;
+    width: 280px;
+    max-height: 220px;
+    overflow-y: auto;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.06);
+    z-index: 1000;
+    margin-bottom: 8px;
+}
+
+.mention-group-title {
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    background: #f8fafc;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.mention-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    font-size: 13px;
+    color: #1e293b;
+}
+
+.mention-option:hover,
+.mention-option.is-active {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.mention-option-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.mention-option-name {
+    font-weight: 600;
+}
+
+.mention-option-sub {
+    margin-left: auto;
+    font-size: 11px;
+    color: #94a3b8;
+}
