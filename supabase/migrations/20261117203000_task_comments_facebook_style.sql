@@ -200,15 +200,31 @@ BEGIN
             
             -- Mention theo role: { "type": "role", "role": "content/design/..." }
             ELSIF v_mention_item->>'type' = 'role' AND (v_mention_item->>'role') IS NOT NULL THEN
-                FOR v_leader_rec IN
-                    SELECT DISTINCT tm.user_id
-                    FROM public.team_members tm
-                    JOIN public.task_assignments ta ON ta.member_id = tm.member_id
-                    WHERE tm.workspace_id = v_workspace_id
-                      AND lower(trim(ta.role)) = lower(trim(v_mention_item->>'role'))
-                LOOP
-                    v_mention_user_ids := array_append(v_mention_user_ids, v_leader_rec.user_id);
-                END LOOP;
+                IF lower(trim(v_mention_item->>'role')) = 'leader' THEN
+                    FOR v_leader_rec IN
+                        SELECT tm.user_id
+                        FROM public.team_members tm
+                        WHERE tm.workspace_id = v_workspace_id AND tm.account_role = 'leader'
+                    LOOP
+                        v_mention_user_ids := array_append(v_mention_user_ids, v_leader_rec.user_id);
+                    END LOOP;
+                ELSE
+                    FOR v_leader_rec IN
+                        SELECT DISTINCT tm.user_id
+                        FROM public.team_members tm
+                        LEFT JOIN public.task_assignments ta ON ta.member_id = tm.member_id AND ta.task_id = p_task_id
+                        LEFT JOIN public.member_roles mr ON mr.member_id = tm.member_id
+                        WHERE tm.workspace_id = v_workspace_id
+                          AND (
+                            lower(trim(COALESCE(ta.role, ''))) = lower(trim(v_mention_item->>'role'))
+                            OR lower(trim(COALESCE(mr.role, ''))) ILIKE '%' || lower(trim(v_mention_item->>'role')) || '%'
+                            OR (lower(trim(v_mention_item->>'role')) = 'editor' AND lower(trim(COALESCE(mr.role, ''))) ILIKE '%edit%')
+                            OR (lower(trim(v_mention_item->>'role')) = 'technician' AND lower(trim(COALESCE(mr.role, ''))) ILIKE '%tech%')
+                          )
+                    LOOP
+                        v_mention_user_ids := array_append(v_mention_user_ids, v_leader_rec.user_id);
+                    END LOOP;
+                END IF;
 
             -- Mention @all: { "type": "all" }
             ELSIF v_mention_item->>'type' = 'all' THEN

@@ -15,11 +15,25 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
 }
 
 function renderMentionEmailHtml(recipientName: string, authorName: string, taskTitle: string, content: string, taskId: string): string {
-    const safeContent = content
+    let safeContent = content
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/@([\p{L}\p{N}_\s-]+)/gu, '<strong style="color: #4f46e5; background: #e0e7ff; padding: 2px 6px; border-radius: 4px;">@$1</strong>');
+        .replace(/>/g, "&gt;");
+
+    // Highlight @all & known roles
+    safeContent = safeContent.replace(/@(all|leader|content|design|editor|photo|technician)\b/gi, '<strong style="color: #4f46e5; background: #e0e7ff; padding: 2px 6px; border-radius: 4px;">@$1</strong>');
+
+    // Highlight recipient name if present
+    if (recipientName && recipientName !== "Bạn") {
+        const escaped = recipientName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        safeContent = safeContent.replace(new RegExp(`@${escaped}(?=[\\s,.:;!?)]|$)`, 'gi'), `<strong style="color: #4f46e5; background: #e0e7ff; padding: 2px 6px; border-radius: 4px;">@${recipientName}</strong>`);
+    }
+
+    // General tag fallback without swallowing trailing spaces/words
+    safeContent = safeContent.replace(/@([\p{L}\p{N}_-]+)/gu, (match, p1) => {
+        if (match.includes("strong")) return match;
+        return `<strong style="color: #4f46e5; background: #e0e7ff; padding: 2px 6px; border-radius: 4px;">@${p1}</strong>`;
+    });
 
     return `<!DOCTYPE html>
 <html lang="vi">

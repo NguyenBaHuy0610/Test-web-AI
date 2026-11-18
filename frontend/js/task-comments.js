@@ -89,7 +89,7 @@
         return role || "Thành viên";
     }
 
-    function renderFormattedContent(text) {
+    function renderFormattedContent(text, mentions = []) {
         if (!text) return "";
         let safe = escapeHTML(text);
 
@@ -104,11 +104,19 @@
             }
         });
 
-        // Highlight @TênNgười (từ unicode hỗ trợ tiếng Việt)
-        safe = safe.replace(/@([\p{L}\p{N}_\s-]+)/gu, (match, p1) => {
-            // Không bọc lại nếu đã nằm trong thẻ mention-tag
-            if (match.includes("mention-tag")) return match;
-            return `<span class="mention-tag">@${p1.trim()}</span>`;
+        // Gom danh sách tên thành viên cần highlight (từ workspaceMembers và mentions của comment)
+        const nameSet = new Set();
+        workspaceMembers.forEach(m => { if (m.name) nameSet.add(m.name); });
+        if (Array.isArray(mentions)) {
+            mentions.forEach(m => { if (m && m.name) nameSet.add(m.name); });
+        }
+
+        // Sắp xếp tên dài trước để ưu tiên match tên đầy đủ trước
+        const sortedNames = Array.from(nameSet).sort((a, b) => b.length - a.length);
+        sortedNames.forEach(name => {
+            const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`@${escapedName}(?=[\\s,.:;!?)]|$)`, "gi");
+            safe = safe.replace(regex, `<span class="mention-tag">@${escapeHTML(name)}</span>`);
         });
 
         return safe;
@@ -296,7 +304,7 @@
                 </div>
             `;
         } else {
-            contentHTML = `<div class="comment-text">${renderFormattedContent(node.content)}</div>`;
+            contentHTML = `<div class="comment-text">${renderFormattedContent(node.content, node.mentions)}</div>`;
         }
 
         // Actions: Phản hồi, Sửa, Xoá
