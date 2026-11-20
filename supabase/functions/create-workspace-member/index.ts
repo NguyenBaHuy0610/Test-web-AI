@@ -272,27 +272,70 @@ Deno.serve(async request => {
         }
         createdUserId = userData.user.id;
 
-        // 8. Trigger nuốt lỗi để không chặn đăng ký, nên phải kiểm tra lại kết quả
-        const { data: membership, error: checkError } = await adminClient
+        // 8. Đảm bảo tài khoản được gán đúng workspace và hồ sơ thành viên
+        let { data: membership, error: checkError } = await adminClient
             .from("team_members")
             .select("member_id, workspace_id")
             .eq("user_id", createdUserId)
             .maybeSingle();
         if (checkError) throw checkError;
-        if (!membership || membership.workspace_id !== workspaceId) {
-            throw new Error("Tài khoản chưa được gán vào đúng workspace.");
-        }
-        if (linkMemberId && membership.member_id !== linkMemberId) {
-            throw new Error("Tài khoản chưa được gắn vào đúng hồ sơ thành viên.");
-        }
 
-        // 9. Nâng quyền nếu leader chọn vai trò leader (trigger mặc định tạo vai trò member)
-        if (accountRole === "leader") {
+        // Nếu trigger chưa kịp gán hoặc gán lệch workspace/hồ sơ, sửa trực tiếp bằng quyền admin
+        let targetMemberId = linkMemberId || membership?.member_id;
+        if (!membership || membership.workspace_id !== workspaceId || (linkMemberId && membership.member_id !== linkMemberId)) {
+            if (membership && membership.workspace_id !== workspaceId) {
+                // Kiểm tra và dọn dẹp workspace rác do trigger tự tạo nếu có
+                const { data: wrongWs } = await adminClient
+                    .from("workspaces")
+                    .select("created_by")
+                    .eq("workspace_id", membership.workspace_id)
+                    .maybeSingle();
+                if (wrongWs && wrongWs.created_by === createdUserId) {
+                    await adminClient.from("workspaces").delete().eq("workspace_id", membership.workspace_id);
+                }
+            }
+
+            if (!targetMemberId) {
+                // Tạo hồ sơ thành viên mới trong workspace nếu chưa có
+                const { data: newMem, error: newMemErr } = await adminClient
+                    .from("members")
+                    .insert({
+                        member_label: memberName,
+                        email,
+                        workspace_id: workspaceId,
+                        is_active: true
+                    })
+                    .select("member_id")
+                    .single();
+                if (newMemErr) throw newMemErr;
+                targetMemberId = newMem.member_id;
+            }
+
+            const { error: upsertErr } = await adminClient
+                .from("team_members")
+                .upsert({
+                    user_id: createdUserId,
+                    member_id: targetMemberId,
+                    workspace_id: workspaceId,
+                    account_role: accountRole
+                }, { onConflict: "user_id" });
+            if (upsertErr) throw upsertErr;
+
+            membership = { member_id: targetMemberId, workspace_id: workspaceId };
+        } else if (accountRole === "leader") {
             const { error: roleError } = await adminClient
                 .from("team_members")
                 .update({ account_role: "leader" })
                 .eq("user_id", createdUserId);
             if (roleError) throw roleError;
+        }
+
+        // Đánh dấu lời mời hoàn tất
+        if (createdInvitationId) {
+            await adminClient
+                .from("workspace_invitations")
+                .update({ status: "accepted", responded_at: new Date().toISOString() })
+                .eq("invitation_id", createdInvitationId);
         }
 
         const { error: restoreMemberError } = await adminClient

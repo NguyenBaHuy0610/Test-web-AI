@@ -613,7 +613,8 @@ window.renderChatHistory = function (conversations) {
 
         const item = document.createElement("a");
         item.className = "chat-history-item";
-        item.href = `dashboard.html?conversation=${encodeURIComponent(conversation.id)}`;
+        item.href = `dashboard.html?conv=${encodeURIComponent(conversation.id)}`;
+        item.dataset.id = conversation.id;
 
         const icon = document.createElement("i");
         icon.setAttribute("data-lucide", "message-square");
@@ -623,11 +624,11 @@ window.renderChatHistory = function (conversations) {
 
         item.append(icon, title);
         item.addEventListener("click", event => {
-            if (currentPage !== "dashboard") return;
-            if (typeof window.openChatConversation !== "function") return;
-
-            event.preventDefault();
-            window.openChatConversation(conversation.id);
+            if ((currentPage === "dashboard" || currentPage === "") && typeof window.openConversation === "function") {
+                event.preventDefault();
+                window.openConversation(conversation.id);
+            }
+            // Ở các trang khác, click vào thẻ <a> tự động chuyển về dashboard.html?conv=...
         });
         list.appendChild(item);
     });
@@ -635,9 +636,60 @@ window.renderChatHistory = function (conversations) {
     if (window.lucide) window.lucide.createIcons();
 };
 
-window.loadChatHistory = function () {
+window.loadChatHistory = async function (userIdOverride) {
     try {
-        const conversations = JSON.parse(localStorage.getItem("mediatask_conversations") || "[]");
+        const userId = userIdOverride || window.appUser?.id || (await window.loadAppUser?.())?.id || null;
+        let conversations = [];
+
+        // 1. Đọc từ cache localStorage theo user_id hoặc key chung
+        if (userId) {
+            try {
+                conversations = JSON.parse(localStorage.getItem(`mediatask_conversations_${userId}`) || "[]");
+            } catch {
+                conversations = [];
+            }
+        }
+        if (!conversations.length) {
+            try {
+                conversations = JSON.parse(localStorage.getItem("mediatask_conversations") || "[]");
+            } catch {
+                conversations = [];
+            }
+        }
+
+        // 2. Nếu có kết nối Supabase, đồng bộ thêm từ bảng ai_conversations
+        if (window.supabaseClient && userId) {
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from("ai_conversations")
+                    .select("id, title, updated_at")
+                    .eq("user_id", userId)
+                    .order("updated_at", { ascending: false })
+                    .limit(20);
+                if (!error && Array.isArray(data) && data.length) {
+                    const localIds = new Set(conversations.map(c => c.id));
+                    data.forEach(remote => {
+                        if (!localIds.has(remote.id)) {
+                            conversations.push({
+                                id: remote.id,
+                                title: remote.title || "Cuộc trò chuyện",
+                                updatedAt: remote.updated_at
+                            });
+                        }
+                    });
+                    if (userId) {
+                        try {
+                            localStorage.setItem(`mediatask_conversations_${userId}`, JSON.stringify(conversations.slice(0, 20)));
+                        } catch {
+                            // ignore quota error
+                        }
+                    }
+                }
+            } catch (syncErr) {
+                console.warn("[sidebar] Không thể đồng bộ ai_conversations từ Supabase:", syncErr);
+            }
+        }
+
         window.renderChatHistory(conversations);
     } catch (error) {
         console.error("Không thể tải lịch sử trò chuyện:", error);
@@ -1029,6 +1081,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 console.error("Không thể tải workspace cá nhân:", workspaceError);
             }
             await initializeAppNotificationCenter(user, container);
+            await window.loadChatHistory(user.id);
         }
 
         container.querySelector(".setting-button")?.addEventListener("click", () => {

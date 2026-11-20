@@ -1416,8 +1416,9 @@ async function initializeDashboard() {
         loadChatHistory()
     ]);
 
-    // 4. Mở cuộc trò chuyện được chọn từ sidebar ở trang khác (?conv=<id>) nếu có
-    const convParam = new URLSearchParams(window.location.search).get("conv");
+    // 4. Mở cuộc trò chuyện được chọn từ sidebar ở trang khác (?conv=<id> hoặc ?conversation=<id>) nếu có
+    const urlParams = new URLSearchParams(window.location.search);
+    const convParam = urlParams.get("conv") || urlParams.get("conversation");
     if (convParam) {
         await openConversation(convParam);
         if (window.history?.replaceState) {

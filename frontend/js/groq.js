@@ -387,6 +387,17 @@
                 `   - NẾU THIẾU Ngày bắt đầu, Ngày kết thúc hoặc Tóm tắt sự kiện: Chỉ hỏi lại ngắn gọn ĐÚNG phần thông tin còn thiếu.\n\n` +
                 `2. QUY TẮC HIỂN THỊ DẠNG BẢNG CHO TỪNG GÓI (BẮT BUỘC TUÂN THỦ 100% - TUYỆT ĐỐI KHÔNG DÙNG DẠNG LIỆT KÊ TỪNG DÒNG VĂN BẢN):\n` +
                 `   - Khi đã có thông tin thời gian và tóm tắt sự kiện, hãy LẬP TỨC GỢI Ý 2-3 GÓI CÔNG VIỆC PHÙ HỢP (ví dụ: Gói Tinh gọn, Gói Tiêu chuẩn, Gói Nâng cao/Toàn diện).\n` +
+                `   - QUY TẮC BẮT BUỘC VỀ VAI TRÒ (ROLES) - TUYỆT ĐỐI KHÔNG DÙNG VAI TRÒ "MANAGER":\n` +
+                `     Chỉ được phép sử dụng DUY NHẤT 5 ban chức năng của Multimedia AECPT và vai trò All:\n` +
+                `       * Content (Nội dung, bài viết, kịch bản, kế hoạch truyền thông)\n` +
+                `       * Design (Thiết kế đồ họa, poster, banner, visual)\n` +
+                `       * Video (hoặc Edit - Quay dựng video, phóng sự, teaser, recap)\n` +
+                `       * Photo (Nhiếp ảnh, chụp hình, hậu kỳ ảnh)\n` +
+                `       * Tech (hoặc Technician - Kỹ thuật âm thanh, ánh sáng, livestream, setup thiết bị)\n` +
+                `       * All (Toàn bộ ban phối hợp trực tiếp)\n` +
+                `     TUYỆT ĐỐI CẤM SỬ DỤNG VAI TRÒ "Manager", "Quản lý", "Marketing", "Leader", "Admin" trong mọi bảng Markdown và dữ liệu JSON timeline_data!\n` +
+                `     Bất kỳ công việc nào mang tính điều phối, quản lý tiến độ, xây dựng chiến lược, nghiên cứu, quản lý KOL/KOC, liên hệ đối tác, hoặc báo cáo tài chính/tổng kết, BẮT BUỘC phân bổ cho vai trò "Content" hoặc "All", TUYỆT ĐỐI KHÔNG TỰ BỊA RA VAI TRÒ "Manager"!\n` +
+                `     KHI NGƯỜI DÙNG YÊU CẦU ĐIỀU CHỈNH / ĐỔI TASK / THAY ĐỔI CÔNG VIỆC: Tuyệt đối giữ đúng quy tắc trên, không bao giờ được thêm role Manager vào bất kỳ task nào!\n` +
                 `   - MỖI GÓI BẮT BUỘC PHẢI TRÌNH BÀY DƯỚI DẠNG BẢNG MARKDOWN ĐẦY ĐỦ VỚI ĐÚNG 7 CỘT SAU:\n` +
                 `     | STT | Tên công việc | Vai trò | Thời lượng | Phụ thuộc | Độ phức tạp | Ghi chú (Trực tiếp/Online) |\n` +
                 `     |:---:|:---|:---|:---:|:---:|:---:|:---|\n` +

@@ -443,13 +443,21 @@
                     cleanName = strippedDecimal || rawName;
                 }
 
+                const rawRoles = Array.isArray(t.roles) ? t.roles : (t.roles ? String(t.roles).split(/[;,]/).map(s => s.trim()) : []);
+                let cleanRoles = rawRoles
+                    .map(r => String(r).trim())
+                    .filter(r => r && !/^(manager|quản lý|quan ly|leader|admin|marketing)$/i.test(r));
+                if (!cleanRoles.length) {
+                    cleanRoles = ["content"];
+                }
+
                 return {
                     id: targetId,
                     task_seq: idx + 1,
                     name: cleanName,
                     duration: Number(t.duration) || (t.duration?.endsWith?.("d") ? parseFloat(t.duration) * 24 : 4),
                     effort: t.effort ? Number(t.effort) : null,
-                    roles_required: Array.isArray(t.roles) ? t.roles : (t.roles ? String(t.roles).split(/[;,]/).map(s => s.trim()) : []),
+                    roles_required: cleanRoles,
                     depends_on: uniqueDeps,
                     complexity: Number(t.complexity) || 2,
                     start: t.start || (t.is_live ? "event" : ""),
@@ -587,9 +595,14 @@
                     design: "Design", designer: "Design",
                     photo: "Photo", photographer: "Photo",
                     video: "Edit", edit: "Edit", editor: "Edit",
-                    tech: "Tech", technician: "Tech"
+                    tech: "Tech", technician: "Tech",
+                    all: "All"
                 };
-                const rawRole = (t.roles_required && t.roles_required[0]) || "General";
+                let rawRoles = (t.roles_required || [])
+                    .map(r => String(r).trim())
+                    .filter(r => r && !/^(manager|quản lý|quan ly|leader|admin|marketing)$/i.test(r));
+                if (!rawRoles.length) rawRoles = ["Content"];
+                const rawRole = rawRoles[0] || "Content";
                 const roleName = roleMap[String(rawRole).trim().toLowerCase()] || String(rawRole).trim();
                 let taskType = "Product";
                 const lowerRole = roleName.toLowerCase();
@@ -612,7 +625,7 @@
                     package_deadline_at: deadlineIso,
                     is_cancelled: false,
                     post_done: false,
-                    status: "todo",
+                    status: "not_started",
                     progress: 0
                 });
 
